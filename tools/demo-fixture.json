@@ -1,0 +1,44 @@
+{
+  "_note": "MADE-UP demo data for public screenshots and the demo GIF. Every project, title and question here is invented.",
+  "schema": 1,
+  "error": null,
+  "generatedAgoMs": 15000,
+  "counts": {"main": 6, "asked": 3, "stale": 2, "quiet": 4, "hidden": 1, "scanned": 42},
+  "projects": [
+    {"id": "shop", "name": "Pocket Shop", "children": [
+      {"id": "shop/web", "name": "Web store"},
+      {"id": "shop/ios", "name": "iOS app"}
+    ]},
+    {"id": "notes", "name": "Notes App", "children": []},
+    {"id": "blog", "name": "Personal Blog", "children": []},
+    {"id": "other", "name": "Other", "children": []}
+  ],
+  "main": [
+    {"sessionId": "local_demo-01", "title": "Add Apple Pay to checkout", "state": "asked", "project": "shop", "subproject": "shop/web", "repo": "pocket-shop-web", "needs": "Stripe test mode is set up. Should I add Google Pay in the same PR?", "lastActivityAgoMs": 240000, "waitingMs": 240000, "link": "claude://claude.ai/epitaxy/local_demo-01"},
+    {"sessionId": "local_demo-02", "title": "Fix dark mode on the settings screen", "state": "asked", "project": "shop", "subproject": "shop/ios", "repo": "pocket-shop-ios", "needs": "Use the system colours, or keep the brand palette and add dark variants?", "lastActivityAgoMs": 720000, "waitingMs": 720000, "link": "claude://claude.ai/epitaxy/local_demo-02"},
+    {"sessionId": "local_demo-03", "title": "Sync notes with iCloud", "state": "blocked", "project": "notes", "subproject": null, "repo": "notes-app", "needs": "Turn on the iCloud capability in Xcode, then tell me to continue", "lastActivityAgoMs": 1500000, "waitingMs": 1500000, "link": "claude://claude.ai/epitaxy/local_demo-03"},
+    {"sessionId": "local_demo-04", "title": "Migrate the blog to Astro", "state": "asked", "project": "blog", "subproject": null, "repo": "my-blog", "needs": "Keep the old URLs with redirects, or switch to the new slug format?", "lastActivityAgoMs": 2100000, "waitingMs": 2100000, "link": "claude://claude.ai/epitaxy/local_demo-04"},
+    {"sessionId": "local_demo-05", "title": "Speed up product image loading", "state": "stuck", "project": "shop", "subproject": "shop/web", "repo": "pocket-shop-web", "needs": "", "lastActivityAgoMs": 2700000, "waitingMs": 2700000, "link": "claude://claude.ai/epitaxy/local_demo-05"},
+    {"sessionId": "local_demo-06", "title": "Write tests for the search index", "state": "blocked", "project": "notes", "subproject": null, "repo": "notes-app", "needs": "Allow the test runner to access the network?", "lastActivityAgoMs": 3300000, "waitingMs": 3300000, "link": "claude://claude.ai/epitaxy/local_demo-06"}
+  ],
+  "scheduled": [
+    {"sessionId": "local_demo-07", "title": "Scheduled task: weekly dependency check", "state": "blocked", "project": "other", "subproject": null, "repo": "dependency-check", "needs": "Sign the GitHub connector back in with /mcp", "lastActivityAgoMs": 600000, "waitingMs": 600000, "link": "claude://claude.ai/epitaxy/local_demo-07"}
+  ],
+  "working": [
+    {"sessionId": "local_demo-08", "title": "Refactor the cart into a store", "state": "working", "project": "shop", "subproject": "shop/web", "repo": "pocket-shop-web", "needs": "", "doing": "Moving cart totals into the store", "lastActivityAgoMs": 20000, "startedAgoMs": 960000, "link": "claude://claude.ai/epitaxy/local_demo-08"},
+    {"sessionId": "local_demo-09", "title": "Add markdown export", "state": "working", "project": "notes", "subproject": null, "repo": "notes-app", "needs": "", "doing": "Running the export tests", "lastActivityAgoMs": 45000, "startedAgoMs": 420000, "link": "claude://claude.ai/epitaxy/local_demo-09"}
+  ],
+  "stale": [
+    {"sessionId": "local_demo-10", "title": "Try a new landing page layout", "state": "blocked", "project": "blog", "subproject": null, "repo": "my-blog", "needs": "Commit and push, or review first?", "lastActivityAgoMs": 259200000, "waitingMs": 259200000, "link": "claude://claude.ai/epitaxy/local_demo-10"},
+    {"sessionId": "local_demo-11", "title": "Investigate flaky login test", "state": "stuck", "project": "shop", "subproject": "shop/ios", "repo": "pocket-shop-ios", "needs": "", "lastActivityAgoMs": 345600000, "waitingMs": 345600000, "link": "claude://claude.ai/epitaxy/local_demo-11"}
+  ],
+  "quiet": [
+    {"sessionId": "local_demo-12", "title": "Add order history page", "state": "review_ready", "project": "shop", "subproject": "shop/web", "repo": "pocket-shop-web", "needs": "Page done and tested; ready for your review", "lastActivityAgoMs": 300000, "waitingMs": 300000, "link": "claude://claude.ai/epitaxy/local_demo-12"},
+    {"sessionId": "local_demo-13", "title": "Fix crash when a note is empty", "state": "review_ready", "project": "notes", "subproject": null, "repo": "notes-app", "needs": "Fixed with a regression test; not committed", "lastActivityAgoMs": 1800000, "waitingMs": 1800000, "link": "claude://claude.ai/epitaxy/local_demo-13"},
+    {"sessionId": "local_demo-14", "title": "Write post: what I learned shipping v1", "state": "unread", "project": "blog", "subproject": null, "repo": "my-blog", "needs": "First draft is in drafts/shipping-v1.md", "lastActivityAgoMs": 5400000, "waitingMs": 5400000, "link": "claude://claude.ai/epitaxy/local_demo-14"},
+    {"sessionId": "local_demo-15", "title": "Update app icons", "state": "unread", "project": "shop", "subproject": "shop/ios", "repo": "pocket-shop-ios", "needs": "All sizes exported; checked on device", "lastActivityAgoMs": 9000000, "waitingMs": 9000000, "link": "claude://claude.ai/epitaxy/local_demo-15"}
+  ],
+  "hidden": [
+    {"sessionId": "local_demo-16", "title": "Rename the project", "state": "asked", "project": "other", "subproject": null, "repo": "ideas", "needs": "Pick one of the three names?", "lastActivityAgoMs": 86400000, "waitingMs": 86400000, "link": "claude://claude.ai/epitaxy/local_demo-16", "section": "main", "hiddenBy": {"kind": "snooze", "untilInMs": 3600000}}
+  ]
+}

@@ -1,0 +1,1362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#E3E8EE">
+<meta name="apple-mobile-web-app-title" content="Sessions">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<title>Sessions needing attention</title>
+<style>
+/* From design/claude-design-result/sn.css (approved canvas 1794503645-b4b3). */
+/* Sessions needing attention: tokens + components. Spacing on an 8 pt grid; 4 only inside controls. */
+
+.sn {
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", Inter, system-ui, "Segoe UI", Roboto, sans-serif;
+  --r-xl: 28px; --r-lg: 24px; --r-md: 16px; --r-sm: 12px; --r-pill: 999px;
+  --blur: 24px; --sat: 160%;
+  --dur: 160ms; --ease: cubic-bezier(.2, .8, .2, 1);
+  font-family: var(--font);
+  color: var(--ink-1);
+  background: var(--backdrop);
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.sn *, .sn *::before, .sn *::after { box-sizing: border-box; }
+.sn button { font-family: inherit; }
+
+/* ---------- Light ---------- */
+.sn-light {
+  --backdrop: radial-gradient(900px 640px at 12% 0%, #EEF1F5 0%, rgba(238,241,245,0) 70%), radial-gradient(800px 700px at 100% 100%, #C9D2DC 0%, rgba(201,210,220,0) 70%), #DCE2E9;
+  --backdrop-solid: #E3E8EE;
+  --glass: rgba(247,249,251,.82);
+  --glass-strong: rgba(251,252,253,.90);
+  --glass-solid: #EFF2F5;
+  --glass-strong-solid: #F6F8FA;
+  --glass-edge: rgba(255,255,255,.80);
+  --glass-line: rgba(30,42,58,.10);
+  --shadow-panel: 0 1px 2px rgba(30,42,58,.06), 0 16px 40px rgba(30,42,58,.10);
+  --shadow-pop: 0 2px 6px rgba(30,42,58,.10), 0 24px 56px rgba(30,42,58,.20);
+  --ink-1: #1E1E1E; --ink-2: #454D59; --ink-3: #59616D;
+  --ink-line: rgba(30,42,58,.14);
+  --hover: rgba(30,42,58,.05); --sel: rgba(30,42,58,.08); --press: rgba(30,42,58,.12);
+  --accent: #17784F; --accent-hover: #13663F; --accent-press: #0F5434; --on-accent: #FFFFFF;
+  --stuck-ink: #7F4700; --stuck-bg: #FBEBD3; --stuck-line: #A8691A;
+  --blocked-ink: #24497F; --blocked-bg: #E2EAF6; --blocked-line: #4F74AC;
+  --err-ink: #A6200F; --err-bg: #FCE9E6; --err-line: #D98E83;
+  --pill-active: #1E1E1E; --on-pill-active: #FFFFFF; --pc-active: rgba(255,255,255,.20);
+  --toast: rgba(30,30,30,.92); --on-toast: #FFFFFF; --toast-hover: rgba(255,255,255,.14);
+  --focus: #1E1E1E;
+  --bubble: #FFFFFF; --bubble-line: rgba(30,42,58,.10);
+  --disabled-bg: #DDE1E6; --disabled-ink: #6B727D;
+  --scrim: rgba(30,42,58,.20);
+  --av-clay-bg: #EBDCD3; --av-clay-ink: #6A4334;
+  --av-slate-bg: #DCE3EB; --av-slate-ink: #364A5E;
+  --av-mauve-bg: #E6DFEB; --av-mauve-ink: #534064;
+  --av-sand-bg: #EDE4CF; --av-sand-ink: #5E4C22;
+  --av-stone-bg: #E4E2DD; --av-stone-ink: #4A463F;
+}
+
+/* ---------- Dark ---------- */
+.sn-dark {
+  --backdrop: radial-gradient(900px 640px at 12% 0%, #262E38 0%, rgba(38,46,56,0) 70%), radial-gradient(800px 700px at 100% 100%, #0D1116 0%, rgba(13,17,22,0) 70%), #161B22;
+  --backdrop-solid: #161B22;
+  --glass: rgba(27,33,41,.78);
+  --glass-strong: rgba(31,38,47,.88);
+  --glass-solid: #1D242C;
+  --glass-strong-solid: #202730;
+  --glass-edge: rgba(255,255,255,.07);
+  --glass-line: rgba(255,255,255,.10);
+  --shadow-panel: 0 1px 2px rgba(0,0,0,.30), 0 16px 40px rgba(0,0,0,.35);
+  --shadow-pop: 0 2px 6px rgba(0,0,0,.35), 0 24px 56px rgba(0,0,0,.55);
+  --ink-1: #ECEFF3; --ink-2: #BCC4CE; --ink-3: #A3ACB8;
+  --ink-line: rgba(255,255,255,.16);
+  --hover: rgba(255,255,255,.05); --sel: rgba(255,255,255,.08); --press: rgba(255,255,255,.12);
+  --accent: #3FB37E; --accent-hover: #52C08C; --accent-press: #34A070; --on-accent: #08170F;
+  --stuck-ink: #F3C27A; --stuck-bg: #3A2D18; --stuck-line: #B98432;
+  --blocked-ink: #A9C6F2; --blocked-bg: #1F2D42; --blocked-line: #6F95CF;
+  --err-ink: #FFB4A9; --err-bg: #41201C; --err-line: #A9554A;
+  --pill-active: #ECEFF3; --on-pill-active: #15191F; --pc-active: rgba(0,0,0,.10);
+  --toast: rgba(236,239,243,.94); --on-toast: #1E1E1E; --toast-hover: rgba(0,0,0,.08);
+  --focus: #ECEFF3;
+  --bubble: #2A323C; --bubble-line: rgba(255,255,255,.08);
+  --disabled-bg: #2C333C; --disabled-ink: #8D96A2;
+  --scrim: rgba(0,0,0,.40);
+  --av-clay-bg: #4A3830; --av-clay-ink: #F2DCD0;
+  --av-slate-bg: #33404D; --av-slate-ink: #D9E4EF;
+  --av-mauve-bg: #3F3549; --av-mauve-ink: #E6DAF0;
+  --av-sand-bg: #46402F; --av-sand-ink: #EFE5CA;
+  --av-stone-bg: #3B3A37; --av-stone-ink: #E4E1DA;
+}
+
+/* ---------- Glass (large surfaces only) ---------- */
+.glass, .glass-strong {
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(var(--sat));
+  backdrop-filter: blur(var(--blur)) saturate(var(--sat));
+  border: 1px solid var(--glass-line);
+  box-shadow: inset 0 1px 0 var(--glass-edge), var(--shadow-panel);
+}
+.glass { background: var(--glass); }
+.glass-strong { background: var(--glass-strong); }
+
+/* Solid version: reduced transparency, no backdrop-filter, or forced for review */
+.sn-solid { background: var(--backdrop-solid); }
+.sn-solid .glass, .sn-solid .glass-strong { -webkit-backdrop-filter: none; backdrop-filter: none; }
+.sn-solid .glass { background: var(--glass-solid); }
+.sn-solid .glass-strong { background: var(--glass-strong-solid); }
+@media (prefers-reduced-transparency: reduce) {
+  .sn { background: var(--backdrop-solid); }
+  .sn .glass, .sn .glass-strong { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .sn .glass { background: var(--glass-solid); }
+  .sn .glass-strong { background: var(--glass-strong-solid); }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .sn { background: var(--backdrop-solid); }
+  .sn .glass { background: var(--glass-solid); }
+  .sn .glass-strong { background: var(--glass-strong-solid); }
+}
+
+/* ---------- Icons ---------- */
+.ic { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.ic-sm { width: 16px; height: 16px; }
+.ic-xs { width: 14px; height: 14px; stroke-width: 2; }
+.ic-lg { width: 24px; height: 24px; }
+.spin { animation: sn-spin .9s linear infinite; }
+@keyframes sn-spin { to { transform: rotate(360deg); } }
+
+/* ---------- Frame layout ---------- */
+.sn-frame { display: flex; gap: 16px; padding: 24px; }
+.lay-half { padding: 16px; }
+.lay-phone { padding: 0; gap: 0; flex-direction: column; }
+
+.rail { flex: none; width: 72px; border-radius: var(--r-xl); display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 16px 0; position: relative; z-index: 5; }
+
+/* Project rail (1280 and 800): monogram avatars with a count badge */
+.rail-projects { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.rail-item { position: relative; flex: none; width: 48px; height: 48px; padding: 0; border: 0; border-radius: var(--r-pill); background: transparent; display: grid; place-items: center; cursor: pointer; transition: box-shadow var(--dur) var(--ease); }
+.rail-item:hover, .rail-item.is-hover { box-shadow: 0 0 0 4px var(--hover); }
+.rail-item:focus-visible, .rail-item.is-focus { outline: 2px solid var(--focus); outline-offset: 4px; }
+.rail-item.is-active .rail-av { box-shadow: 0 0 0 2px var(--glass-solid), 0 0 0 4px var(--ink-1); }
+.av-all { background: var(--sel); color: var(--ink-1); font-size: 13px; }
+.av-soon { background: transparent; color: var(--ink-3); border: 1px dashed var(--ink-3); }
+.rail-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 4px; border-radius: var(--r-pill); background: var(--pill-active); color: var(--on-pill-active); font: 600 12px/20px var(--font); text-align: center; box-shadow: 0 0 0 2px var(--glass-solid); }
+.rail-badge.has-asked { background: var(--accent); color: var(--on-accent); }
+.rail-tip { position: absolute; left: calc(100% + 16px); top: 50%; transform: translateY(-50%); z-index: 20; display: none; padding: 4px 8px; border-radius: 8px; background: var(--pill-active); color: var(--on-pill-active); font: 500 13px/20px var(--font); white-space: nowrap; pointer-events: none; box-shadow: var(--shadow-pop); }
+.rail-item:hover .rail-tip, .rail-item:focus-visible .rail-tip, .rail-item.is-tip .rail-tip { display: block; }
+.lay-phone .rail { display: none; }
+.mark { width: 44px; height: 44px; border-radius: var(--r-pill); display: grid; place-items: center; color: var(--ink-1); background: var(--sel); }
+.theme-seg { display: flex; flex-direction: column; gap: 8px; padding: 4px; border-radius: var(--r-pill); background: var(--hover); }
+
+.col { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 16px; }
+.lay-phone .col { gap: 0; height: 100%; }
+
+.hdr { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; min-height: 56px; padding: 0 8px; }
+.hdr h1 { margin: 0; font: 600 28px/36px var(--font); letter-spacing: -0.01em; color: var(--ink-1); }
+.lay-half .hdr h1 { font-size: 24px; line-height: 32px; }
+.sn .hdr-theme { display: none; }
+.lay-phone .hdr { padding: 16px 16px 16px; align-items: center; min-height: 0; }
+.lay-phone .hdr h1 { flex: 1; font-size: 22px; line-height: 28px; }
+.sn.lay-phone .hdr-theme { display: grid; }
+.lay-phone .hdr-right { width: 100%; }
+.lay-phone.pv-session .hdr, .lay-phone.pv-session .banner { display: none; }
+
+.status { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 16px; border-radius: var(--r-pill); font: 500 13px/16px var(--font); color: var(--ink-2); background: var(--hover); white-space: nowrap; }
+.status .dot { width: 8px; height: 8px; border-radius: var(--r-pill); background: var(--ink-3); }
+.status.late { color: var(--stuck-ink); background: var(--stuck-bg); border: 1px solid var(--stuck-line); font-weight: 600; }
+.lay-phone .status { height: 28px; padding: 0 8px; background: none; }
+.lay-phone .status.late { padding: 0 8px; background: var(--stuck-bg); }
+
+.panes { flex: 1; min-height: 0; display: flex; gap: 16px; position: relative; }
+.list { flex: none; width: 520px; min-height: 0; display: flex; flex-direction: column; border-radius: var(--r-xl); overflow: hidden; }
+.lay-half .list { flex: 1; width: auto; }
+.lay-phone .list { flex: 1; width: auto; border-radius: var(--r-xl) var(--r-xl) 0 0; border-bottom: 0; }
+
+.detail { flex: 1; min-width: 0; display: flex; flex-direction: column; border-radius: var(--r-xl); }
+.scrim { display: none; }
+.lay-half .detail { position: absolute; top: 0; right: 0; bottom: 0; width: 520px; z-index: 4; box-shadow: inset 0 1px 0 var(--glass-edge), var(--shadow-pop); transform: translateX(calc(100% + 24px)); opacity: 0; pointer-events: none; visibility: hidden; transition: transform 200ms var(--ease), opacity 200ms var(--ease), visibility 0s linear 200ms; }
+.lay-half.sheet-open .detail { transform: none; opacity: 1; pointer-events: auto; visibility: visible; transition: transform 200ms var(--ease), opacity 200ms var(--ease), visibility 0s; }
+.lay-half.sheet-open .scrim { display: block; position: absolute; inset: 0; background: var(--scrim); border-radius: var(--r-xl); z-index: 3; }
+.lay-phone .detail { position: absolute; inset: 0; z-index: 4; border-radius: 0; border: 0; display: none; }
+.lay-phone.pv-session .detail { display: flex; }
+.only-phone, .only-half { display: none !important; }
+.lay-phone .only-phone { display: grid !important; }
+.lay-half .only-half { display: grid !important; }
+
+/* ---------- Project pills ---------- */
+.pills { flex: none; display: flex; gap: 8px; overflow-x: auto; padding: 16px 16px 8px; scrollbar-width: none; }
+.pills::-webkit-scrollbar { display: none; }
+.pills.sub { padding-top: 0; flex-wrap: wrap; overflow: visible; }
+.lay-desktop .pills.top, .lay-half .pills.top { display: none; }
+.list-head { flex: none; display: flex; align-items: center; gap: 8px; padding: 24px 24px 16px; }
+.list-head h2 { margin: 0; font: 600 17px/24px var(--font); color: var(--ink-1); }
+.lay-phone .list-head { display: none; }
+.pill { flex: none; height: 44px; padding: 0 16px; border-radius: var(--r-pill); border: 1px solid var(--ink-line); background: transparent; color: var(--ink-1); display: inline-flex; align-items: center; gap: 8px; font: 600 14px/20px var(--font); cursor: pointer; white-space: nowrap; transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
+.pill:hover, .pill.is-hover { background: var(--hover); }
+.pill:active, .pill.is-pressed { background: var(--press); }
+.pill:focus-visible, .pill.is-focus { outline: 2px solid var(--focus); outline-offset: 2px; }
+.pill.is-active { background: var(--pill-active); color: var(--on-pill-active); border-color: transparent; }
+.pc { min-width: 24px; height: 24px; padding: 0 8px; border-radius: var(--r-pill); background: var(--sel); font: 600 12px/24px var(--font); text-align: center; }
+.pill.is-active .pc { background: var(--pc-active); }
+.pa { height: 24px; padding: 0 8px; border-radius: var(--r-pill); background: var(--accent); color: var(--on-accent); font: 600 12px/24px var(--font); }
+.pill.soon { color: var(--ink-3); border-style: dashed; font-weight: 500; }
+.soon-tag { font: 500 12px/16px var(--font); color: var(--ink-3); }
+.pills.sub .pill { font-weight: 500; }
+.pills.sub .pill.is-active { background: var(--sel); color: var(--ink-1); border: 1px solid var(--ink-1); }
+.pills.sub .pill.is-active .pc { background: var(--sel); }
+
+.fnote { display: flex; align-items: center; gap: 8px; margin: 8px 8px 0; padding: 0 0 0 16px; border-radius: var(--r-md); background: var(--hover); font: 500 14px/20px var(--font); color: var(--ink-2); }
+.fnote span { flex: 1; }
+
+/* ---------- List ---------- */
+.scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 96px; position: relative; scrollbar-width: thin; }
+.sec { display: flex; align-items: center; gap: 8px; padding: 24px 16px 8px; margin: 0; font: 600 15px/20px var(--font); color: var(--ink-1); }
+.count { min-width: 24px; height: 24px; padding: 0 8px; border-radius: var(--r-pill); background: var(--sel); font: 600 12px/24px var(--font); text-align: center; color: var(--ink-1); }
+
+.row { display: flex; gap: 16px; align-items: flex-start; width: 100%; padding: 16px; border: 0; border-radius: var(--r-md); background: transparent; color: var(--ink-1); text-align: left; font: inherit; cursor: pointer; transition: background var(--dur) var(--ease); }
+.row:hover, .row.is-hover { background: var(--hover); }
+.row:active, .row.is-pressed { background: var(--press); }
+.row.is-selected { background: var(--sel); }
+.row:focus-visible, .row.is-focus { outline: 2px solid var(--focus); outline-offset: -2px; }
+
+/* Row wrapper: holds the row and, at 800, its More actions button */
+.row-wrap { position: relative; display: flex; align-items: center; border-radius: var(--r-md); }
+.row-wrap > .row { flex: 1; min-width: 0; width: auto; }
+.row-wrap.is-selected { background: var(--sel); }
+.row-wrap .row.is-selected { background: transparent; }
+.lay-half .row-wrap:hover { background: var(--hover); }
+.lay-half .row-wrap .row:hover { background: transparent; }
+.more { position: relative; flex: none; padding-right: 8px; }
+.more-btn { border-color: var(--ink-line); }
+.menu.row-menu { top: calc(100% + 8px); bottom: auto; right: 8px; }
+.row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.row-top { display: flex; align-items: flex-start; gap: 8px; }
+.row-title { flex: 1; min-width: 0; font: 600 15px/20px var(--font); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.row.quiet .row-title { font-weight: 500; }
+.row.is-unread .row-title { font-weight: 700; }
+.row-time { flex: none; font: 400 13px/20px var(--font); color: var(--ink-3); white-space: nowrap; }
+.row-bottom { display: flex; align-items: flex-start; gap: 8px; }
+.row-needs { flex: 1; min-width: 0; font: 400 14px/20px var(--font); color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.row-needs.one { -webkit-line-clamp: 1; }
+.row-needs.note { font-style: italic; }
+.row.sched { align-items: center; padding: 8px 16px; }
+.sched-ic { flex: none; width: 48px; height: 48px; border-radius: var(--r-pill); display: grid; place-items: center; background: var(--sel); color: var(--ink-2); }
+.sched-line { flex: 1; min-width: 0; font: 400 14px/20px var(--font); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sched-line b { font-weight: 600; color: var(--ink-1); }
+.sched-side { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+
+.av { flex: none; width: 48px; height: 48px; border-radius: var(--r-pill); display: grid; place-items: center; font: 600 15px/1 var(--font); letter-spacing: 0.02em; }
+.av-sm { width: 40px; height: 40px; font-size: 14px; }
+.av-xs { width: 32px; height: 32px; font-size: 12px; }
+.av-clay { background: var(--av-clay-bg); color: var(--av-clay-ink); }
+.av-slate { background: var(--av-slate-bg); color: var(--av-slate-ink); }
+.av-mauve { background: var(--av-mauve-bg); color: var(--av-mauve-ink); }
+.av-sand { background: var(--av-sand-bg); color: var(--av-sand-ink); }
+.av-stone { background: var(--av-stone-bg); color: var(--av-stone-ink); }
+
+/* ---------- State badges (colour + label + shape) ---------- */
+.badge { flex: none; display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: var(--r-pill); font: 600 12px/16px var(--font); white-space: nowrap; border: 1px solid transparent; }
+.b-asked { background: var(--accent); color: var(--on-accent); }
+.b-stuck { background: var(--stuck-bg); color: var(--stuck-ink); border: 1px dashed var(--stuck-line); }
+.b-blocked { background: var(--blocked-bg); color: var(--blocked-ink); border-color: var(--blocked-line); }
+.b-review { background: transparent; color: var(--ink-2); border-color: var(--ink-3); }
+.b-unread { background: transparent; color: var(--ink-2); padding: 0 4px; }
+.udot { width: 8px; height: 8px; border-radius: var(--r-pill); background: var(--ink-1); }
+
+/* ---------- Archive-style rows (Stale, Hidden) ---------- */
+.arch { display: flex; align-items: center; gap: 16px; width: 100%; height: 56px; margin-top: 8px; padding: 0 16px; border: 0; border-radius: var(--r-md); background: transparent; color: var(--ink-1); font: 600 15px/20px var(--font); text-align: left; cursor: pointer; transition: background var(--dur) var(--ease); }
+.arch:hover, .arch.is-hover { background: var(--hover); }
+.arch:active { background: var(--press); }
+.arch:focus-visible, .arch.is-focus { outline: 2px solid var(--focus); outline-offset: -2px; }
+.arch-ic { flex: none; width: 48px; display: grid; place-items: center; color: var(--ink-2); }
+.arch-label { flex: 1; min-width: 0; }
+.arch-count { font: 500 14px/20px var(--font); color: var(--ink-3); }
+.arch .chev { color: var(--ink-2); transition: transform var(--dur) var(--ease); }
+.arch.is-open .chev { transform: rotate(90deg); }
+
+.hrow { display: flex; align-items: center; gap: 16px; padding: 16px; border-radius: var(--r-md); }
+.hrow .row-main { gap: 4px; }
+.hreason { display: flex; align-items: center; gap: 8px; font: 400 13px/16px var(--font); color: var(--ink-3); }
+
+.empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 32px 24px 24px; }
+.em-icon { width: 56px; height: 56px; border-radius: var(--r-pill); display: grid; place-items: center; background: var(--sel); color: var(--ink-1); }
+.empty h3 { margin: 8px 0 0; font: 600 17px/24px var(--font); }
+.empty p { margin: 0; font: 400 14px/20px var(--font); color: var(--ink-3); }
+.errnote { margin: 24px 16px; font: 400 14px/20px var(--font); color: var(--ink-3); }
+
+/* ---------- Detail ---------- */
+.d-head { flex: none; display: flex; align-items: center; gap: 16px; padding: 24px 32px; border-bottom: 1px solid var(--ink-line); }
+.d-who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.d-proj { font: 600 15px/20px var(--font); }
+.d-sub { font: 400 13px/16px var(--font); color: var(--ink-3); }
+.d-wait { display: inline-flex; align-items: center; gap: 8px; font: 500 13px/16px var(--font); color: var(--ink-2); white-space: nowrap; }
+.d-body { flex: 1; min-height: 0; overflow-y: auto; padding: 32px; display: flex; flex-direction: column; gap: 24px; }
+.d-title { margin: 0; font: 600 24px/32px var(--font); letter-spacing: -0.005em; max-width: 34em; }
+.d-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font: 400 14px/20px var(--font); color: var(--ink-2); }
+.d-repo { display: inline-flex; align-items: center; gap: 8px; }
+.bubble-wrap { display: flex; flex-direction: column; gap: 8px; max-width: 600px; }
+.bubble-label { font: 500 13px/16px var(--font); color: var(--ink-3); padding-left: 16px; }
+.bubble { margin: 0; background: var(--bubble); border: 1px solid var(--bubble-line); border-radius: 4px var(--r-lg) var(--r-lg) var(--r-lg); padding: 16px 24px; font: 400 17px/26px var(--font); color: var(--ink-1); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+.bubble.is-note { font-style: italic; border: 1px dashed var(--stuck-line); }
+
+.actions { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 24px 32px; border-top: 1px solid var(--ink-line); }
+.hint { flex: 1 1 100%; min-width: 0; margin: 0; font: 400 13px/20px var(--font); color: var(--ink-3); }
+.act-btns { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.snz { position: relative; }
+.d-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 8px; padding: 32px; }
+.d-empty h2 { margin: 8px 0 0; font: 600 20px/28px var(--font); }
+.d-empty p { margin: 0; font: 400 15px/22px var(--font); color: var(--ink-3); max-width: 32em; }
+
+.lay-half .d-head { padding: 16px 24px; }
+.lay-half .d-body { padding: 24px; }
+.lay-half .actions { padding: 16px 24px; flex-wrap: wrap; }
+.lay-half .hint { flex-basis: 100%; }
+.lay-phone .d-head { padding: 8px 16px; gap: 8px; }
+.lay-phone .d-body { padding: 24px 16px; }
+.lay-phone .d-title { font-size: 20px; line-height: 28px; }
+.lay-phone .bubble { font-size: 16px; line-height: 24px; padding: 16px; }
+.lay-phone .actions { padding: 16px; }
+.lay-phone .hint { display: none; }
+.lay-phone .act-btns { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.lay-phone .act-btns .btn-primary { grid-column: 1 / -1; order: -1; justify-content: center; }
+.lay-phone .act-btns .snz { order: 0; }
+.lay-phone .act-btns .snz .btn { width: 100%; justify-content: center; }
+.lay-phone .act-btns .btn-tertiary { order: 1; justify-content: center; }
+
+/* ---------- Buttons: default, hover, pressed, disabled, loading ---------- */
+.btn { height: 48px; padding: 0 24px; border-radius: var(--r-pill); border: 1px solid transparent; display: inline-flex; align-items: center; gap: 8px; font: 600 15px/20px var(--font); white-space: nowrap; cursor: pointer; transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), transform var(--dur) var(--ease); }
+.btn:focus-visible, .btn.is-focus { outline: 2px solid var(--focus); outline-offset: 2px; }
+.btn-primary { background: var(--accent); color: var(--on-accent); }
+.btn-primary:hover, .btn-primary.is-hover { background: var(--accent-hover); }
+.btn-primary:active, .btn-primary.is-pressed { background: var(--accent-press); transform: translateY(1px); }
+.btn-secondary { background: transparent; color: var(--ink-1); border-color: var(--ink-2); }
+.btn-secondary:hover, .btn-secondary.is-hover { background: var(--hover); }
+.btn-secondary:active, .btn-secondary.is-pressed { background: var(--press); transform: translateY(1px); }
+.btn-tertiary { background: transparent; color: var(--ink-1); padding: 0 16px; }
+.btn-tertiary:hover, .btn-tertiary.is-hover { background: var(--hover); }
+.btn-tertiary:active, .btn-tertiary.is-pressed { background: var(--press); }
+.btn:disabled, .btn.is-disabled { cursor: not-allowed; transform: none; }
+.btn-primary:disabled:not(.is-loading), .btn-primary.is-disabled { background: var(--disabled-bg); color: var(--disabled-ink); }
+.btn-secondary:disabled:not(.is-loading), .btn-secondary.is-disabled { border-color: var(--ink-line); color: var(--disabled-ink); background: transparent; }
+.btn-tertiary:disabled:not(.is-loading), .btn-tertiary.is-disabled { color: var(--disabled-ink); background: transparent; }
+.btn.is-loading { cursor: progress; }
+.btn-sm { height: 44px; padding: 0 16px; font-size: 14px; }
+
+.icon-btn { flex: none; width: 44px; height: 44px; border-radius: var(--r-pill); border: 1px solid var(--ink-line); background: transparent; color: var(--ink-1); display: grid; place-items: center; cursor: pointer; transition: background var(--dur) var(--ease); }
+.icon-btn:hover, .icon-btn.is-hover { background: var(--hover); }
+.icon-btn:active, .icon-btn.is-pressed { background: var(--press); }
+.icon-btn:focus-visible, .icon-btn.is-focus { outline: 2px solid var(--focus); outline-offset: 2px; }
+.icon-btn.is-on { background: var(--pill-active); color: var(--on-pill-active); border-color: transparent; }
+.icon-btn.plain { border-color: transparent; }
+
+/* ---------- Snooze menu ---------- */
+.menu { position: absolute; right: 0; bottom: 56px; z-index: 6; min-width: 320px; padding: 8px; border-radius: var(--r-md); display: flex; flex-direction: column; gap: 4px; box-shadow: inset 0 1px 0 var(--glass-edge), var(--shadow-pop); }
+.menu-item { display: flex; align-items: center; gap: 16px; width: 100%; height: 48px; padding: 0 16px; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--ink-1); font: 500 15px/20px var(--font); text-align: left; white-space: nowrap; cursor: pointer; }
+.menu-item .ic { color: var(--ink-2); }
+.menu-item:hover, .menu-item.is-hover { background: var(--hover); }
+.menu-item:active { background: var(--press); }
+.menu-item:focus-visible, .menu-item.is-focus { outline: 2px solid var(--focus); outline-offset: -2px; }
+.lay-phone .menu { left: 0; right: auto; min-width: 311px; }
+
+/* ---------- Toast ---------- */
+.toast { position: absolute; left: 50%; bottom: 32px; transform: translateX(-50%); z-index: 10; display: flex; align-items: center; gap: 16px; padding: 4px 4px 4px 24px; border-radius: var(--r-pill); background: var(--toast); color: var(--on-toast); -webkit-backdrop-filter: blur(var(--blur)) saturate(var(--sat)); backdrop-filter: blur(var(--blur)) saturate(var(--sat)); box-shadow: var(--shadow-pop); font: 500 15px/20px var(--font); white-space: nowrap; }
+.toast-btn { height: 44px; padding: 0 16px; border-radius: var(--r-pill); border: 0; background: transparent; color: var(--on-toast); font: 700 15px/20px var(--font); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.toast-btn:hover, .toast-btn.is-hover { background: var(--toast-hover); }
+.toast-btn:focus-visible { outline: 2px solid var(--on-toast); outline-offset: -4px; }
+.lay-phone .toast { bottom: 16px; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* Above the phone's two-row action bar, so it never covers Snooze or Dismiss */
+.lay-phone.pv-session .toast { bottom: 152px; }
+
+/* ---------- Error banner ---------- */
+.banner { flex: none; display: flex; align-items: flex-start; gap: 16px; padding: 16px 24px; border-radius: var(--r-md); background: var(--err-bg); border: 1px solid var(--err-line); color: var(--ink-1); }
+.banner .ic { color: var(--err-ink); margin-top: 2px; }
+.banner h2 { margin: 0; font: 600 15px/20px var(--font); color: var(--err-ink); }
+.banner p { margin: 4px 0 0; font: 400 14px/20px var(--font); color: var(--ink-1); }
+.lay-phone .banner { margin: 0 16px 16px; padding: 16px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sn *, .sn *::before, .sn *::after { transition: none !important; }
+  .spin { animation-duration: 2.4s; }
+}
+
+/* ---------- Page (beyond the canvas stylesheet) ---------- */
+html, body { margin: 0; height: 100%; }
+body { overflow: hidden; }
+.sn.sn-frame { width: 100%; height: 100vh; height: 100dvh; }
+.vh { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.loading { margin: 24px 16px; font: 400 14px/20px var(--font); color: var(--ink-3); }
+/* Project bar (changed 2026-11-12 at the user's request): full project names across the top, replacing
+   the rail of monograms. It wraps onto more rows instead of hiding projects; the phone keeps a scrolling row.
+   It sits on glass so even the quiet coming-soon pills keep their contrast. */
+.projbar { flex: none; display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; border-radius: var(--r-xl); }
+.lay-phone .projbar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; border-radius: 0; border-left: 0; border-right: 0; padding: 8px 16px; }
+.projbar::-webkit-scrollbar { display: none; }
+.lay-phone.pv-session .projbar { display: none; }
+/* Working (added 2026-11-12): a neutral outlined badge, calmer than the needs-you states. */
+.b-working { background: transparent; color: var(--ink-2); border-color: var(--ink-3); }
+.lay-phone .projbar { margin-bottom: 8px; }
+.lay-phone .pills.sub { padding-top: 16px; }
+/* With the rail gone, the theme switch lives in the header at every width. */
+.sn .hdr-theme { display: grid; }
+.hdr-right { margin-left: auto; }
+.lay-phone .hdr-right { order: 3; margin-left: 0; }
+.lay-phone .hdr-theme { order: 2; }
+a.btn { text-decoration: none; }
+</style>
+</head>
+<body>
+<div id="app" class="sn sn-frame sn-light lay-desktop" aria-busy="true"></div>
+<noscript>Sessions needing attention needs JavaScript to show your sessions.</noscript>
+<script>
+
+// Card times are rebased once (to when the page loaded), so a Dismiss keeps holding across polls; only the
+// scan time follows the clock, so the snapshot never looks late.
+var SN_BASE = Date.now();
+function snRebase(d) {
+  var now = SN_BASE;
+  d = JSON.parse(JSON.stringify(d));
+  d.generatedAt = Date.now() - (d.generatedAgoMs || 0);
+  ['main', 'scheduled', 'working', 'stale', 'quiet', 'hidden'].forEach(function (k) {
+    (d[k] || []).forEach(function (c) {
+      c.lastActivityAt = now - (c.lastActivityAgoMs || c.waitingMs || 0);
+      if (c.startedAgoMs) c.startedAt = now - c.startedAgoMs;
+      if (c.hiddenBy && c.hiddenBy.untilInMs) c.hiddenBy.until = now + c.hiddenBy.untilInMs;
+    });
+  });
+  return d;
+}
+// Stands in for GET /state.json and POST /state (server.py's rules), seeded from the fixture's hidden cards.
+function snStateSink(fails) {
+  var state = null;
+  function copy(x) { return JSON.parse(JSON.stringify(x)); }
+  function seed() {
+    state = { version: 1, hidden: {} };
+    (snRebase(SN_FIXTURE).hidden || []).forEach(function (c) {
+      var by = c.hiddenBy || {};
+      state.hidden[c.sessionId] = by.kind === 'snooze' ? { kind: 'snooze', until: by.until, at: SN_BASE }
+                                                       : { kind: 'dismiss', lastActivityAt: c.lastActivityAt, at: SN_BASE };
+    });
+  }
+  return {
+    get: function () { if (!state) seed(); return copy(state); },
+    post: function (b) {
+      if (fails) return Promise.reject(new Error('made-up save failure'));
+      if (!state) seed();
+      var now = Date.now();
+      if (b.action === 'snooze') state.hidden[b.sessionId] = { kind: 'snooze', until: b.until, at: now };
+      else if (b.action === 'dismiss') state.hidden[b.sessionId] = { kind: 'dismiss', lastActivityAt: b.lastActivityAt, at: now };
+      else delete state.hidden[b.sessionId];
+      return copy(state);
+    }
+  };
+}
+var SN_FIXTURE = {"schema": 1, "error": null, "generatedAgoMs": 20000, "projects": [{"id": "client-a", "name": "Client A", "children": [{"id": "client-a/us", "name": "Client A US"}, {"id": "client-a/canada", "name": "Client A Canada"}]}, {"id": "client-b", "name": "Client B", "comingSoon": true, "children": []}, {"id": "client-c", "name": "Client C", "comingSoon": true, "children": []}, {"id": "tools", "name": "Internal Tools", "children": []}, {"id": "kb", "name": "Knowledge Base", "children": []}, {"id": "other", "name": "Other", "children": []}], "main": [{"sessionId": "local_example-00", "title": "TICKET-231 Lead routing: local test calls", "repo": "client-a-bot-canada", "org": "acct/org", "state": "asked", "project": "client-a", "subproject": "client-a/canada", "needs": "Will you make the two test calls now?", "lastActivityAgoMs": 1500000, "link": "claude://claude.ai/epitaxy/local_example-00"}, {"sessionId": "local_example-01", "title": "TICKET-218 Out-of-coverage reply", "repo": "client-a-bot-canada", "org": "acct/org", "state": "asked", "project": "client-a", "subproject": "client-a/canada", "needs": "Send me the call ID once you've made the call?", "lastActivityAgoMs": 3600000, "link": "claude://claude.ai/epitaxy/local_example-01"}, {"sessionId": "local_example-02", "title": "TICKET-240 Web chat: foreign address", "repo": "client-a-bot (worktree)", "org": "acct/org", "state": "asked", "project": "client-a", "subproject": "client-a/us", "needs": "Run the regression check now, or ship as is?", "lastActivityAgoMs": 480000, "link": "claude://claude.ai/epitaxy/local_example-02"}, {"sessionId": "local_example-03", "title": "TICKET-207 Contact text update", "repo": "client-a-bot-canada", "org": "acct/org", "state": "stuck", "project": "client-a", "subproject": "client-a/canada", "needs": "", "lastActivityAgoMs": 79200000, "link": "claude://claude.ai/epitaxy/local_example-03"}, {"sessionId": "local_example-04", "title": "Test dashboard port conflict", "repo": "internal-tools", "org": "acct/org", "state": "blocked", "project": "tools", "subproject": null, "needs": "Stop the old dashboard on port 8110, then tell me to restart it", "lastActivityAgoMs": 10800000, "link": "claude://claude.ai/epitaxy/local_example-04"}, {"sessionId": "local_example-05", "title": "Latest config changes", "repo": "knowledge-base", "org": "acct/org", "state": "blocked", "project": "kb", "subproject": null, "needs": "Pick a fix: drop the transfer step (my pick) or reorder the steps", "lastActivityAgoMs": 172800000, "link": "claude://claude.ai/epitaxy/local_example-05"}], "scheduled": [{"sessionId": "local_example-06", "title": "Scheduled task: chat-mention-ping", "repo": "chat-ping", "org": "acct/org", "state": "blocked", "project": "other", "subproject": null, "needs": "Sign the chat connector back in with /mcp", "lastActivityAgoMs": 240000, "link": "claude://claude.ai/epitaxy/local_example-06"}], "stale": [{"sessionId": "local_example-07", "title": "Multi-phase ticket planning", "repo": "client-a-bot-canada", "org": "acct/org", "state": "stuck", "project": "client-a", "subproject": "client-a/canada", "needs": "", "lastActivityAgoMs": 1036800000, "link": "claude://claude.ai/epitaxy/local_example-07"}, {"sessionId": "local_example-08", "title": "Country analytics from phone number", "repo": "client-a-bot-canada", "org": "acct/org", "state": "blocked", "project": "client-a", "subproject": "client-a/canada", "needs": "Confirm the reporting tenant before I post the request", "lastActivityAgoMs": 1728000000, "link": "claude://claude.ai/epitaxy/local_example-08"}, {"sessionId": "local_example-09", "title": "Examples showcase phase 0", "repo": "knowledge-base", "org": "acct/org", "state": "blocked", "project": "kb", "subproject": null, "needs": "Commit and push, or review first?", "lastActivityAgoMs": 3196800000, "link": "claude://claude.ai/epitaxy/local_example-09"}, {"sessionId": "local_example-10", "title": "Claude settings: permissions default", "repo": "scratch", "org": "acct/org", "state": "blocked", "project": "other", "subproject": null, "needs": "Check the status line for auto mode; press Shift+Tab if it's off", "lastActivityAgoMs": 3801600000, "link": "claude://claude.ai/epitaxy/local_example-10"}], "quiet": [{"sessionId": "local_example-11", "title": "TICKET-241 Office number fallback", "repo": "client-a-bot-canada", "org": "acct/org", "state": "review_ready", "project": "client-a", "subproject": "client-a/canada", "needs": "Down to the last run: regression check", "lastActivityAgoMs": 240000, "link": "claude://claude.ai/epitaxy/local_example-11"}, {"sessionId": "local_example-12", "title": "Voice handoff with foreign address", "repo": "client-a-bot", "org": "acct/org", "state": "review_ready", "project": "client-a", "subproject": "client-a/us", "needs": "Replied on both review threads; open gaps go into the drafts", "lastActivityAgoMs": 1123200000, "link": "claude://claude.ai/epitaxy/local_example-12"}, {"sessionId": "local_example-13", "title": "Flow map: path shown by default", "repo": "internal-tools", "org": "acct/org", "state": "unread", "project": "tools", "subproject": null, "needs": "Bordered 'Read again' button added; checked at 1500 px", "lastActivityAgoMs": 432000000, "link": "claude://claude.ai/epitaxy/local_example-13"}, {"sessionId": "local_example-14", "title": "TICKET-190 Ticket inquiry", "repo": "client-a-bot-canada", "org": "acct/org", "state": "unread", "project": "client-a", "subproject": "client-a/canada", "needs": "Integration logs checked; spec updated, not committed", "lastActivityAgoMs": 691200000, "link": "claude://claude.ai/epitaxy/local_example-14"}, {"sessionId": "local_example-15", "title": "Release walkthrough docs", "repo": "knowledge-base", "org": "acct/org", "state": "unread", "project": "kb", "subproject": null, "needs": "Docs updated; deploy table fixed", "lastActivityAgoMs": 777600000, "link": "claude://claude.ai/epitaxy/local_example-15"}, {"sessionId": "local_example-16", "title": "Mac scheduler app", "repo": "scheduler-app", "org": "acct/org", "state": "unread", "project": "other", "subproject": null, "needs": "Login item registered; restart to verify", "lastActivityAgoMs": 604800000, "link": "claude://claude.ai/epitaxy/local_example-16"}], "hidden": [], "problems": [], "counts": {"main": 7, "asked": 3, "stale": 4, "quiet": 6, "hidden": 0, "scanned": 120}, "working": [{"sessionId": "local_example-90", "title": "Made-up: rebuild the export step", "state": "working", "project": "tools", "subproject": null, "repo": "internal-tools", "needs": "", "lastActivityAgoMs": 30000, "startedAgoMs": 1620000, "link": "claude://claude.ai/epitaxy/local_example-90"}, {"sessionId": "local_example-91", "title": "TICKET-250 Made-up: holiday routing table", "state": "working", "project": "client-a", "subproject": "client-a/us", "repo": "client-a-bot", "needs": "", "lastActivityAgoMs": 900000, "startedAgoMs": 2400000, "link": "claude://claude.ai/epitaxy/local_example-91"}]};
+window.__SN_OPTIONS__ = {"theme": "light", "view": "project=all&sub=all"};
+window.__STATUS_SOURCE__ = function () { return snRebase(SN_FIXTURE); };
+window.__STATE_SINK__ = snStateSink(false);
+</script>
+<script>
+(function () {
+  'use strict';
+
+  // ---------- Constants ----------
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  var LINK_RE = /^claude:\/\/claude\.ai\/epitaxy\/local_[A-Za-z0-9_-]{1,80}$/;
+  var STUCK_NOTE = 'Turn started but never finished: may be a permission prompt or a slow tool.';
+  var LATE_MS = 3 * 60 * 1000;
+  var POLL_MS = 30 * 1000;
+  var NEEDS = ['asked', 'stuck', 'blocked'];
+  var LABEL = { asked: 'Asked', stuck: 'Stuck', blocked: 'Blocked', review_ready: 'Review', unread: 'Unread', working: 'Working' };
+  var BKEY = { asked: 'asked', stuck: 'stuck', blocked: 'blocked', review_ready: 'review', unread: 'unread', working: 'working' };
+  var BUBBLE = { asked: 'The session asked', stuck: 'Status', blocked: 'Needs from you', review_ready: 'Summary', unread: 'Summary', working: 'Status' };
+  var QUIET_HINT_MS = 5 * 60 * 1000;   // a working session this quiet may be waiting on a permission prompt
+  var AVATARS = ['clay', 'slate', 'mauve', 'sand', 'stone'];
+  var ICONS = {
+    asked: [['path', { d: 'M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 21l1.9-5.6A8.5 8.5 0 1 1 21 11.5z' }]],
+    stuck: [['path', { d: 'M7 3h10M7 21h10M8 3v3l4 6 4-6V3M8 21v-3l4-6 4 6v3' }]],
+    blocked: [['circle', { cx: 12, cy: 12, r: 9 }], ['path', { d: 'M10 9v6M14 9v6' }]],
+    review: [['path', { d: 'M5 12.5l4.5 4.5L19 7.5' }]],
+    working: [['path', { d: 'M3 12h4l3-8 4 16 3-8h4' }]],
+    check: [['path', { d: 'M5 12.5l4.5 4.5L19 7.5' }]],
+    clock: [['circle', { cx: 12, cy: 12, r: 9 }], ['path', { d: 'M12 7v5l3 2' }]],
+    archive: [['rect', { x: 3, y: 4, width: 18, height: 5, rx: 1.5 }], ['path', { d: 'M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M10 13h4' }]],
+    eyeoff: [['path', { d: 'M3 3l18 18M10.6 6.1A9.8 9.8 0 0 1 12 6c5 0 9 6 9 6a16 16 0 0 1-2.6 3.2M6.6 6.6A16 16 0 0 0 3 12s4 6 9 6a9 9 0 0 0 4.4-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2' }]],
+    chevron: [['path', { d: 'M9 6l6 6-6 6' }]],
+    dots: [['circle', { cx: 5, cy: 12, r: 1.5 }], ['circle', { cx: 12, cy: 12, r: 1.5 }], ['circle', { cx: 19, cy: 12, r: 1.5 }]],
+    down: [['path', { d: 'M6 9l6 6 6-6' }]],
+    sunrise: [['path', { d: 'M3 18h18M7 18a5 5 0 0 1 10 0M12 5v4M5.6 9.6l1.4 1.4M18.4 9.6L17 11' }]],
+    back: [['path', { d: 'M19 12H5M11 18l-6-6 6-6' }]],
+    close: [['path', { d: 'M6 6l12 12M18 6L6 18' }]],
+    out: [['path', { d: 'M7 17L17 7M9 7h8v8' }]],
+    folder: [['path', { d: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' }]],
+    warn: [['path', { d: 'M12 4l9 16H3z' }], ['path', { d: 'M12 10v4M12 17v.5' }]],
+    alert: [['circle', { cx: 12, cy: 12, r: 9 }], ['path', { d: 'M12 7.5v5.5M12 16.5v.5' }]],
+    sun: [['circle', { cx: 12, cy: 12, r: 4 }], ['path', { d: 'M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' }]],
+    moon: [['path', { d: 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z' }]],
+    spin: [['path', { d: 'M21 12a9 9 0 1 1-9-9' }]]
+  };
+
+  // ---------- Small helpers (all text goes in through textContent) ----------
+  function h(tag, props, kids) {
+    var el = document.createElement(tag);
+    var k, v;
+    if (props) {
+      for (k in props) {
+        v = props[k];
+        if (v === null || v === undefined || v === false) continue;
+        if (k === 'class') el.className = v;
+        else if (k === 'text') el.textContent = String(v);
+        else if (k.slice(0, 2) === 'on') el.addEventListener(k.slice(2), v);
+        else el.setAttribute(k, v === true ? '' : String(v));
+      }
+    }
+    (kids || []).forEach(function (c) {
+      if (c === null || c === undefined || c === false) return;
+      el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+    });
+    return el;
+  }
+  function icon(name, cls) {
+    var svg = document.createElementNS(SVGNS, 'svg');
+    svg.setAttribute('class', 'ic' + (cls ? ' ' + cls : ''));
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    ICONS[name].forEach(function (part) {
+      var el = document.createElementNS(SVGNS, part[0]);
+      for (var a in part[1]) el.setAttribute(a, String(part[1][a]));
+      svg.appendChild(el);
+    });
+    return svg;
+  }
+  function str(v) { return typeof v === 'string' ? v : ''; }
+  function num(v) { return typeof v === 'number' && isFinite(v) ? v : null; }
+  function list(v) { return Array.isArray(v) ? v.filter(function (c) { return c && typeof c === 'object'; }) : []; }
+  function ago(ms) {
+    var m = Math.max(0, Math.floor(ms / 60000));
+    if (m < 60) return m + 'm';
+    var hrs = Math.floor(m / 60);
+    if (hrs < 24) return hrs + 'h';
+    return Math.floor(hrs / 24) + 'd';
+  }
+  function since(ms) { return ms < 60000 ? 'just now' : ago(ms) + ' ago'; }
+  function clock(t) { var d = new Date(t); return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); }
+  function snoozeText(until, now) {
+    var a = new Date(now), b = new Date(until);
+    var tomorrow = new Date(a.getFullYear(), a.getMonth(), a.getDate() + 1);
+    if (b.toDateString() === a.toDateString()) return 'Snoozed until ' + clock(until);
+    if (b.toDateString() === tomorrow.toDateString()) return 'Snoozed until tomorrow ' + clock(until);
+    return 'Snoozed until ' + b.toLocaleDateString(undefined, { weekday: 'long' }) + ' ' + clock(until);
+  }
+  function monogram(name) {
+    var words = str(name).trim().split(/\s+/).filter(Boolean);
+    if (!words.length) return '?';
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+  // A folder's letters: "feather-note" → FN, "gitSync" → GS, "image-resizer (worktree)" → IR.
+  function folderMonogram(repo) {
+    var s = str(repo).replace(/\s*\(worktree\)\s*$/, '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[-_.]+/g, ' ');
+    return s.trim() ? monogram(s) : null;
+  }
+  function shortName(child, parent) {
+    var n = str(child.name) || str(child.id), p = str(parent.name);
+    return p && n.indexOf(p + ' ') === 0 ? n.slice(p.length + 1) : n;
+  }
+  function safeLink(c) { return LINK_RE.test(str(c.link)) ? c.link : null; }
+  function store(key, value) {
+    try { if (value === undefined) return window.localStorage.getItem(key); window.localStorage.setItem(key, value); } catch (e) { return null; }
+    return null;
+  }
+
+  // ---------- State ----------
+  var opts = window.__SN_OPTIONS__ || {};
+  var S = {
+    data: null, project: 'all', sub: 'all', selected: null, expStale: false, expHidden: false,
+    sheet: false, phoneView: 'list', opening: null, theme: opts.theme || store('sn.theme') || null,
+    layout: 'desktop', focusNext: null, lastFetchFailed: false,
+    // Phase 4: raw = the scanner's status; state = state.json; data = raw with state applied.
+    raw: null, state: null, toast: null, menu: null, menuReturn: null, busy: false
+  };
+  var app = document.getElementById('app');
+
+  function decode(s) { try { return decodeURIComponent(s); } catch (e) { return null; } }
+  (function readView() {
+    // Snapshots can set the view; the live page reads the URL hash, then localStorage.
+    // A malformed hash is ignored, never fatal.
+    var src = opts.view || location.hash.slice(1) || store('sn.view') || '';
+    src.split('&').forEach(function (part) {
+      var kv = part.split('=');
+      var value = kv[1] ? decode(kv[1]) : null;
+      if (kv[0] === 'project' && value) S.project = value;
+      if (kv[0] === 'sub' && value) S.sub = value;
+    });
+  })();
+  function saveView() {
+    var v = 'project=' + encodeURIComponent(S.project) + '&sub=' + encodeURIComponent(S.sub);
+    store('sn.view', v);
+    try { history.replaceState(null, '', '#' + v); } catch (e) { /* file:// snapshots */ }
+  }
+
+  var darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function theme() { return S.theme || (darkQuery && darkQuery.matches ? 'dark' : 'light'); }
+  function layoutFor(w) { return w >= 1100 ? 'desktop' : (w >= 640 ? 'half' : 'phone'); }
+
+  // ---------- Data ----------
+  function errorData(message, generatedAt) {
+    return { schema: 1, generatedAt: generatedAt || null, error: message, projects: [], main: [], scheduled: [], stale: [], quiet: [], hidden: [], counts: {} };
+  }
+  function normalise(d) {
+    if (!d || typeof d !== 'object') return errorData("The status can't be read.");
+    if (d.error) return errorData(String(d.error), num(d.generatedAt));
+    // Format drift must become the red banner, never a calm 0 (handoff §14).
+    var lists = ['projects', 'main', 'scheduled', 'stale', 'quiet', 'hidden'];
+    if (d.schema !== 1 || num(d.generatedAt) === null || !d.counts || typeof d.counts !== 'object' ||
+        lists.some(function (k) { return !Array.isArray(d[k]); })) {
+      return errorData('The status has an unexpected format. Run python3 scanner.py again, or update the dashboard.', num(d.generatedAt));
+    }
+    return {
+      generatedAt: num(d.generatedAt), error: d.error ? String(d.error) : null,
+      projects: list(d.projects), main: list(d.main), scheduled: list(d.scheduled), working: list(d.working), stale: list(d.stale),
+      quiet: list(d.quiet), hidden: list(d.hidden), counts: d.counts && typeof d.counts === 'object' ? d.counts : {}
+    };
+  }
+  // Hidden: the same rule as the scanner (handoff §5), so a Snooze or Dismiss shows at once instead of after
+  // the next scan. A snooze never lasts more than 8 days; a dismiss ends when the session has newer activity.
+  var SNOOZE_MAX_MS = 8 * 24 * 60 * 60 * 1000;
+  var RANK = { asked: 0, stuck: 1, blocked: 2, review_ready: 3, unread: 4, working: 5 };
+  var SECTION_KEYS = { main: 1, scheduled: 1, stale: 1, quiet: 1 };
+  function hiddenBy(card, state, now) {
+    var hidden = state && state.hidden;
+    var e = hidden && typeof hidden === 'object' ? own(hidden, card.sessionId) : null;
+    if (!e || typeof e !== 'object') return null;
+    if (e.kind === 'snooze' && num(e.until) !== null && now < e.until && e.until <= now + SNOOZE_MAX_MS) return { kind: 'snooze', until: e.until };
+    if (e.kind === 'dismiss' && num(e.lastActivityAt) !== null && num(card.lastActivityAt) !== null &&
+        card.lastActivityAt <= e.lastActivityAt) return { kind: 'dismiss' };
+    return null;
+  }
+  function sortCards(cards) {
+    return cards.sort(function (a, b) {
+      return ((own(RANK, a.state) || 0) - (own(RANK, b.state) || 0)) || ((num(b.lastActivityAt) || 0) - (num(a.lastActivityAt) || 0));
+    });
+  }
+  function applyState(d, state) {
+    if (!d || d.error || !state) return d;
+    var now = Date.now();
+    var out = {};
+    for (var k in d) out[k] = d[k];
+    var entries = [];
+    Object.keys(SECTION_KEYS).forEach(function (key) {
+      out[key] = [];
+      d[key].forEach(function (c) { entries.push([c, key]); });
+    });
+    // Cards the scanner hid come back when the state no longer hides them (Undo, Show again).
+    d.hidden.forEach(function (c) {
+      var plain = {};
+      for (var f in c) if (f !== 'section' && f !== 'hiddenBy') plain[f] = c[f];
+      entries.push([plain, own(SECTION_KEYS, c.section) ? c.section : 'main']);
+    });
+    out.hidden = [];
+    entries.forEach(function (pair) {
+      var by = hiddenBy(pair[0], state, now);
+      if (by) {
+        var h2 = {};
+        for (var f in pair[0]) h2[f] = pair[0][f];
+        h2.section = pair[1]; h2.hiddenBy = by;
+        out.hidden.push(h2);
+      } else out[pair[1]].push(pair[0]);
+    });
+    Object.keys(SECTION_KEYS).concat(['hidden']).forEach(function (key) { sortCards(out[key]); });
+    return out;
+  }
+
+  var loadSeq = 0;
+  function load() {
+    var seq = ++loadSeq;   // the poll and a tab coming back can overlap: only the newest answer counts
+    var source = typeof window.__STATUS_SOURCE__ === 'function'
+      ? Promise.resolve().then(window.__STATUS_SOURCE__)
+      : fetch('/status.json', { cache: 'no-store', credentials: 'same-origin' }).then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        });
+    // state.json failing to load hides nothing extra: the scanner's own split still applies.
+    var stateSource = (window.__STATE_SINK__
+      ? Promise.resolve().then(function () { return window.__STATE_SINK__.get(); })
+      : fetch('/state.json', { cache: 'no-store', credentials: 'same-origin' }).then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })).then(null, function () { return null; });
+    return Promise.all([source, stateSource]).then(function (res) {
+      if (seq !== loadSeq) return;
+      S.raw = normalise(res[0]);
+      if (res[1] && typeof res[1] === 'object') S.state = res[1];
+      S.data = applyState(S.raw, S.state); S.lastFetchFailed = false; render();
+    }, function () {
+      if (seq !== loadSeq) return;
+      // Drop the old lists (never show stale calm data), but keep when the last scan was.
+      S.data = errorData("Can't reach the dashboard server. Is python3 server.py running?", S.data && S.data.generatedAt);
+      S.lastFetchFailed = true; render();
+    });
+  }
+
+  // ---------- Derived views ----------
+  function menu() {
+    var d = S.data;
+    var need = d && !d.error ? d.main.concat(d.scheduled) : [];
+    function count(fn) {
+      var cs = need.filter(fn);
+      return { n: cs.length, a: cs.filter(function (c) { return c.state === 'asked'; }).length };
+    }
+    var all = count(function () { return true; });
+    var items = [{ id: 'all', name: 'All projects', mono: 'All', av: 'all', soon: false, children: [], n: all.n, a: all.a }];
+    var colour = 0;   // coming-soon projects are dashed, so they don't take a colour
+    (d ? d.projects : []).forEach(function (p) {
+      if (typeof p.id !== 'string') return;
+      var c = count(function (x) { return x.project === p.id; });
+      var av = p.comingSoon ? 'stone' : AVATARS[colour++ % AVATARS.length];
+      items.push({ id: p.id, name: str(p.name) || p.id, mono: monogram(p.name || p.id), av: av,
+                   soon: !!p.comingSoon, children: list(p.children), n: c.n, a: c.a });
+    });
+    return items;
+  }
+  function matches(c) {
+    if (S.project === 'all') return true;
+    if (c.project !== S.project) return false;
+    if (S.sub === 'all') return true;
+    if (S.sub === 'general') return !c.subproject;
+    return c.subproject === S.sub;
+  }
+  function view() {
+    var d = S.data;
+    var v = { needs: [], sched: [], working: [], stale: [], quiet: [], hidden: [], nav: [] };
+    if (!d || d.error) return v;
+    v.needs = d.main.filter(matches);
+    v.sched = d.scheduled.filter(matches);
+    v.working = d.working.filter(matches);
+    v.stale = d.stale.filter(matches);
+    v.quiet = d.quiet.filter(matches);
+    v.hidden = d.hidden.filter(matches);
+    v.nav = v.needs.concat(v.sched, v.working, S.expStale ? v.stale : [], v.quiet);
+    return v;
+  }
+  function byId(v, sid) {
+    for (var i = 0; i < v.nav.length; i++) if (v.nav[i].sessionId === sid) return v.nav[i];
+    return null;
+  }
+
+  // ---------- Actions ----------
+  function setProject(pid) {
+    S.project = pid; S.sub = 'all'; S.selected = null; S.sheet = false; S.phoneView = 'list';
+    S.focusNext = 'pill:' + pid; saveView(); render();
+  }
+  function setSub(sid) { S.sub = sid; S.selected = null; S.focusNext = 'sub:' + sid; saveView(); render(); }
+  function pick(sid, viaKey) {
+    S.selected = sid; S.menu = null;
+    if (S.layout === 'half') { S.sheet = true; S.focusNext = 'open'; }
+    else if (S.layout === 'phone') { S.phoneView = 'session'; S.focusNext = 'back'; }
+    else S.focusNext = viaKey ? 'row:' + sid : null;
+    render();
+  }
+  function closeDetail() {
+    var sid = S.selected;
+    S.sheet = false; S.phoneView = 'list'; S.focusNext = 'row:' + sid; render();
+  }
+  function openSession(card) {
+    var link = safeLink(card);
+    if (!link) return;
+    // Let the browser follow the link first, then show the loading state.
+    setTimeout(function () {
+      S.opening = card.sessionId; render();
+      setTimeout(function () { S.opening = null; render(); }, 1200);
+    }, 50);
+  }
+  function setTheme(t, key) { S.theme = t; store('sn.theme', t); S.focusNext = key || 'theme:' + t; render(); }
+
+  // Snooze, Dismiss, Undo, Show again (Phase 4). The server is the only writer of state.json.
+  function post(body) {
+    S.busy = true;
+    var p = window.__STATE_SINK__
+      ? Promise.resolve().then(function () { return window.__STATE_SINK__.post(body); })
+      : fetch('/state', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), credentials: 'same-origin', cache: 'no-store' })
+          .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+    return p.then(function (state) {
+      // A poll that started before this write would bring back the old state: ignore its answer.
+      loadSeq++;
+      S.busy = false; S.state = state; S.data = applyState(S.raw, S.state);
+    }, function (e) { S.busy = false; throw e; });
+  }
+  // The toast lasts 8 s, paused while the pointer or focus is on it. Screen readers hear it through a
+  // live region that is never re-rendered (a region inserted with its text often isn't announced).
+  var toastTimer = null;
+  var announcer = document.createElement('div');
+  announcer.className = 'sr-only';
+  announcer.setAttribute('role', 'status');
+  announcer.setAttribute('aria-live', 'polite');
+  document.body.appendChild(announcer);
+  function showToast(text, undoSid) {
+    S.toast = { text: text, undo: undoSid || null };
+    announcer.textContent = '';
+    setTimeout(function () { announcer.textContent = text + (undoSid ? '. Undo with Command Z.' : ''); }, 50);
+    holdToast(false);
+  }
+  function holdToast(hold) {
+    clearTimeout(toastTimer);
+    if (hold || !S.toast) return;
+    toastTimer = setTimeout(function () {
+      // Focus still on Undo: wait another round (also covers a focusin the browser never sent).
+      var inToast = document.activeElement && document.activeElement.closest && document.activeElement.closest('.toast');
+      if (inToast) { holdToast(false); return; }
+      S.toast = null;
+      render();
+    }, 8000);
+  }
+  function saveFailed() { showToast("Couldn't save. Try again.", null); render(); }
+  function tomorrowNine(now) {
+    var d = new Date(now);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 9, 0, 0, 0).getTime();
+  }
+  function act(card, action, until, text) {
+    if (S.busy) return;
+    var sid = card.sessionId;
+    var ids = view().nav.map(function (c) { return c.sessionId; });
+    var i = ids.indexOf(sid);
+    var next = i < 0 ? null : (ids[i + 1] || ids[i - 1] || null);
+    var body = action === 'snooze' ? { action: 'snooze', sessionId: sid, until: until }
+                                   : { action: 'dismiss', sessionId: sid, lastActivityAt: card.lastActivityAt };
+    var back = S.menu ? S.menuReturn : (action === 'dismiss' ? 'dismiss' : null);
+    S.menu = null;
+    post(body).then(function () {
+      // Focus moves to the next session (handoff §9); with none left, to the Hidden row it went to.
+      var land = next ? 'row:' + next : 'arch:hidden';
+      showToast(text, sid);
+      S.selected = S.layout === 'desktop' ? next : null;
+      S.sheet = false; S.phoneView = 'list';
+      S.focusNext = land;
+      render();
+    }, function () { S.focusNext = back; saveFailed(); });
+  }
+  function restore(sid, fromToast) {
+    if (S.busy) return;
+    post({ action: 'restore', sessionId: sid }).then(function () {
+      S.toast = null; clearTimeout(toastTimer);
+      if (fromToast) { S.selected = S.layout === 'desktop' ? sid : null; S.focusNext = 'row:' + sid; }
+      else S.focusNext = 'arch:hidden';
+      render();
+    }, saveFailed);
+  }
+  function toggleMenu(name, triggerKey) {
+    S.menu = S.menu === name ? null : name;
+    S.menuReturn = triggerKey;
+    S.focusNext = S.menu ? 'menu:1h' : triggerKey;
+    render();
+  }
+  function menuItems(card, withDismiss) {
+    var now = Date.now();
+    var hour = now + 60 * 60 * 1000;
+    var items = [
+      h('button', { class: 'menu-item', type: 'button', role: 'menuitem', 'data-key': 'menu:1h',
+                    onclick: function () { act(card, 'snooze', hour, 'Snoozed until ' + clock(hour)); } },
+        [icon('clock'), 'Snooze 1 hour (back at ' + clock(hour) + ')']),
+      h('button', { class: 'menu-item', type: 'button', role: 'menuitem', 'data-key': 'menu:tomorrow',
+                    onclick: function () { act(card, 'snooze', tomorrowNine(now), 'Snoozed until tomorrow 9:00'); } },
+        [icon('sunrise'), 'Snooze until tomorrow 9:00'])
+    ];
+    if (withDismiss) {
+      items.push(h('button', { class: 'menu-item', type: 'button', role: 'menuitem', 'data-key': 'menu:dismiss',
+                               onclick: function () { act(card, 'dismiss', null, 'Dismissed until it changes'); } },
+        [icon('eyeoff'), 'Dismiss']));
+    }
+    return items;
+  }
+
+  // ---------- Rendering ----------
+  function own(map, key) { return Object.prototype.hasOwnProperty.call(map, key) ? map[key] : null; }
+  function badge(state) {
+    var k = own(BKEY, state) || 'unread';
+    var kids = [];
+    if (k === 'unread') kids.push(h('span', { class: 'udot', 'aria-hidden': 'true' }));
+    else kids.push(icon(k === 'review' ? 'review' : k, 'ic-xs'));
+    kids.push(own(LABEL, state) || str(state));
+    return h('span', { class: 'badge b-' + k }, kids);
+  }
+  // A session's avatar: its folder's letters, in its project's colour.
+  function avatar(card, items, cls) {
+    var m = null;
+    items.forEach(function (p) { if (p.id === card.project) m = p; });
+    var text = folderMonogram(card.repo) || (m ? m.mono : '?');
+    return h('span', { class: 'av ' + (cls || '') + ' av-' + (m ? (m.soon ? 'stone' : m.av) : 'stone'), 'aria-hidden': 'true', text: text });
+  }
+  function projectName(card, items) {
+    var name = card.project, sub = null;
+    items.forEach(function (p) {
+      if (p.id !== card.project) return;
+      name = p.name;
+      p.children.forEach(function (c) { if (c.id === card.subproject) sub = shortName(c, p); });
+    });
+    return { name: name, sub: sub };
+  }
+
+  // The project bar: full names, counts and "N asked" chips across the top (all widths).
+  function projectBar(items, err) {
+    return h('div', { class: 'projbar glass', role: 'toolbar', 'aria-label': 'Projects', onkeydown: rovingKeys },
+      items.map(function (p, i) {
+        // Before the first load (or during an error) the saved project may not be listed: then "All" is the
+        // toolbar's Tab stop, so the bar can always be reached (review finding).
+        var stop = S.project === p.id || (i === 0 && !items.some(function (x) { return x.id === S.project; }));
+        return pillButton(p, S.project === p.id, err, 'pill:' + p.id, function () { setProject(p.id); }, p.id === 'all' ? 'All' : p.name, stop);
+      }));
+  }
+
+  function pillButton(p, active, err, key, onclick, label, stop) {
+    return h('button', {
+      class: 'pill' + (active ? ' is-active' : '') + (p.soon ? ' soon' : ''), type: 'button', tabindex: (active || stop) ? 0 : -1,
+      'aria-pressed': active ? 'true' : 'false', 'data-key': key, onclick: onclick,
+      'aria-label': p.soon ? label + ', coming soon' : (err ? label : label + ', ' + p.n + ' need you' + (p.a ? ', ' + p.a + ' asked' : ''))
+    }, [
+      h('span', { text: label }),
+      !err && !p.soon && p.n > 0 ? h('span', { class: 'pc', text: String(p.n) }) : null,
+      !err && !p.soon && p.a > 0 ? h('span', { class: 'pa', text: (p.a > 9 ? '9+' : p.a) + ' asked' }) : null,
+      p.soon ? h('span', { class: 'soon-tag', text: 'soon' }) : null
+    ]);
+  }
+
+  // What a card's row and bubble say, and its time label.
+  function noteFor(card, now) {
+    if (card.state === 'stuck') return STUCK_NOTE;
+    if (card.state === 'working') {
+      var last = num(card.lastActivityAt);
+      var quiet = last === null ? 0 : now - last;
+      return quiet > QUIET_HINT_MS ? 'Quiet for ' + ago(quiet) + ': may be a permission prompt or a slow tool.' : 'Working now';
+    }
+    return str(card.needs);
+  }
+  function timeFor(card, now) {
+    var last = num(card.lastActivityAt);
+    if (card.state === 'working') {
+      var start = num(card.startedAt);
+      return 'working ' + ago(now - (start === null ? (last === null ? now : last) : start));
+    }
+    return 'waiting ' + ago(last === null ? (num(card.waitingMs) || 0) : now - last);
+  }
+
+  function row(card, items, kind, sel, firstSid) {
+    var isSel = card.sessionId === sel;
+    var showSel = isSel && (S.layout !== 'half' || S.sheet);
+    var now = Date.now();
+    var time = timeFor(card, now);
+    var needs = noteFor(card, now);
+    var props = {
+      class: 'row' + (kind === 'sched' ? ' sched' : '') + (kind === 'quiet' ? ' quiet' : '') + (card.state === 'unread' ? ' is-unread' : '') + (showSel ? ' is-selected' : ''),
+      type: 'button', 'data-sid': card.sessionId, 'data-key': 'row:' + card.sessionId,
+      tabindex: (isSel || (!sel && card.sessionId === firstSid)) ? 0 : -1,
+      'aria-current': showSel ? 'true' : null,
+      onclick: function () { pick(card.sessionId, false); }
+    };
+    var inner;
+    if (kind === 'sched') {
+      inner = [
+        h('span', { class: 'sched-ic', 'aria-hidden': 'true' }, [icon('clock')]),
+        h('span', { class: 'sched-line' }, [h('b', { text: str(card.title) }), ' · ' + needs]),
+        h('span', { class: 'sched-side' }, [h('span', { class: 'row-time', text: time }), badge(card.state)])
+      ];
+    } else {
+      inner = [
+        avatar(card, items),
+        h('span', { class: 'row-main' }, [
+          h('span', { class: 'row-top' }, [h('span', { class: 'row-title', text: str(card.title) }), h('span', { class: 'row-time', text: time })]),
+          h('span', { class: 'row-bottom' }, [
+            h('span', { class: 'row-needs' + (card.state === 'stuck' || card.state === 'working' ? ' note' : '') + (kind === 'quiet' || kind === 'working' ? ' one' : ''), text: needs }),
+            badge(card.state)
+          ])
+        ])
+      ];
+    }
+    // At 800 a row opens its slide-over in one click; Snooze and Dismiss sit in its "More actions" menu.
+    var more = null;
+    if (S.layout === 'half' && kind !== 'working' && card.state !== 'working') {
+      var name = 'row:' + card.sessionId, open = S.menu === name;
+      more = h('div', { class: 'more' }, [
+        h('button', { class: 'icon-btn more-btn', type: 'button', 'aria-label': 'More actions: ' + str(card.title), 'aria-haspopup': 'menu',
+                      'aria-expanded': open ? 'true' : 'false', 'data-key': 'more:' + card.sessionId, tabindex: props.tabindex,
+                      onclick: function () { toggleMenu(name, 'more:' + card.sessionId); } }, [icon('dots')]),
+        open ? h('div', { class: 'menu row-menu glass-strong', role: 'menu', 'aria-label': 'More actions', onkeydown: menuKeys }, menuItems(card, true)) : null
+      ]);
+    }
+    return h('div', { class: 'row-wrap' + (showSel ? ' is-selected' : '') }, [h('button', props, inner), more]);
+  }
+  function hiddenRow(card, items, now) {
+    var by = card.hiddenBy || {};
+    var snoozed = by.kind === 'snooze' && num(by.until) !== null;
+    return h('div', { class: 'hrow' }, [
+      avatar(card, items),
+      h('span', { class: 'row-main' }, [
+        h('span', { class: 'row-title', text: str(card.title) }),
+        h('span', { class: 'hreason' }, [icon(snoozed ? 'clock' : 'eyeoff', 'ic-sm'), snoozed ? snoozeText(by.until, now) : 'Dismissed until it changes'])
+      ]),
+      h('button', { class: 'btn btn-secondary btn-sm', type: 'button', 'data-key': 'show:' + card.sessionId, 'aria-label': 'Show again: ' + str(card.title),
+                    onclick: function () { restore(card.sessionId, false); } }, ['Show again'])
+    ]);
+  }
+  function archRow(label, count, open, ic, toggle, key) {
+    return h('button', { class: 'arch' + (open ? ' is-open' : ''), type: 'button', 'aria-expanded': open ? 'true' : 'false', 'data-key': key, onclick: toggle }, [
+      h('span', { class: 'arch-ic', 'aria-hidden': 'true' }, [icon(ic)]),
+      h('span', { class: 'arch-label', text: label }),
+      h('span', { class: 'arch-count', text: String(count) }),
+      icon('chevron', 'chev')
+    ]);
+  }
+  function secHeader(label, n, asked) {
+    return h('h2', { class: 'sec' }, [
+      h('span', { text: label }),
+      n > 0 ? h('span', { class: 'count', text: String(n) }) : null,
+      asked > 0 ? h('span', { class: 'pa', text: asked + ' asked' }) : null
+    ]);
+  }
+
+  function listView(items, v, err, now) {
+    var d = S.data;
+    var proj = null;
+    items.forEach(function (p) { if (p.id === S.project) proj = p; });
+    var kids = [];
+    kids.push(h('div', { class: 'list-head' }, [
+      h('h2', { text: proj && proj.id !== 'all' ? proj.name : 'All projects' }),
+      proj && proj.soon ? h('span', { class: 'soon-tag', text: 'coming soon' }) : null
+    ]));
+    if (proj && proj.children.length) {
+      var need = d && !d.error ? d.main.concat(d.scheduled) : [];
+      var subs = [{ id: 'all', label: 'All' }].concat(proj.children.map(function (c) { return { id: c.id, label: shortName(c, proj) }; }), [{ id: 'general', label: 'General' }]);
+      kids.push(h('div', { class: 'pills sub', role: 'toolbar', 'aria-label': proj.name + ' sub-projects', onkeydown: rovingKeys }, subs.map(function (s) {
+        var cs = need.filter(function (c) { return c.project === proj.id && (s.id === 'all' || (s.id === 'general' ? !c.subproject : c.subproject === s.id)); });
+        var p = { n: cs.length, a: cs.filter(function (c) { return c.state === 'asked'; }).length, soon: false };
+        return pillButton(p, S.sub === s.id, err, 'sub:' + s.id, function () { setSub(s.id); }, s.label);
+      })));
+    }
+
+    var body = [];
+    if (!d) {
+      body.push(h('p', { class: 'loading', text: 'Loading sessions…' }));
+    } else if (err) {
+      body.push(h('p', { class: 'errnote', text: 'No counts while the scan is failing. The list fills in again on the first good scan; the page checks every 30 seconds.' }));
+    } else {
+      var total = d.main.length + d.scheduled.length;
+      var inView = v.needs.length + v.sched.length;
+      if (S.project !== 'all' && total - inView > 0) {
+        var more = total - inView;
+        body.push(h('div', { class: 'fnote' }, [
+          h('span', { text: more === 1 ? '1 more needs you in other projects' : more + ' more need you in other projects' }),
+          h('button', { class: 'btn btn-tertiary btn-sm', type: 'button', 'data-key': 'showall', onclick: function () { setProject('all'); } }, ['Show all projects'])
+        ]));
+      }
+      var sel = S.selected, firstSid = v.nav.length ? v.nav[0].sessionId : null;
+      var askedN = v.needs.concat(v.sched).filter(function (c) { return c.state === 'asked'; }).length;
+      body.push(secHeader('Needs you', inView, askedN));
+      if (!inView) {
+        body.push(h('div', { class: 'empty', role: 'status' }, [
+          h('span', { class: 'em-icon', 'aria-hidden': 'true' }, [icon('check', 'ic-lg')]),
+          h('h3', { text: 'Nothing needs you right now' }),
+          h('p', { text: 'Checked ' + since(now - (d.generatedAt || now)) })
+        ]));
+      }
+      v.needs.forEach(function (c) { body.push(row(c, items, 'main', sel, firstSid)); });
+      v.sched.forEach(function (c) { body.push(row(c, items, 'sched', sel, firstSid)); });
+      // Working: sessions running right now. Shown only when there are some; they don't need you yet.
+      if (v.working.length) {
+        body.push(secHeader('Working', v.working.length, 0));
+        v.working.forEach(function (c) { body.push(row(c, items, 'working', sel, firstSid)); });
+      }
+      body.push(archRow('Stale: archive or revive?', v.stale.length, S.expStale, 'archive', function () { S.expStale = !S.expStale; S.focusNext = 'arch:stale'; render(); }, 'arch:stale'));
+      if (S.expStale) v.stale.forEach(function (c) { body.push(row(c, items, 'stale', sel, firstSid)); });
+      body.push(secHeader('Quieter', v.quiet.length, 0));
+      v.quiet.forEach(function (c) { body.push(row(c, items, 'quiet', sel, firstSid)); });
+      body.push(archRow('Hidden', v.hidden.length, S.expHidden, 'eyeoff', function () { S.expHidden = !S.expHidden; S.focusNext = 'arch:hidden'; render(); }, 'arch:hidden'));
+      if (S.expHidden) v.hidden.forEach(function (c) { body.push(hiddenRow(c, items, now)); });
+    }
+    kids.push(h('div', { class: 'scroll', id: 'sn-scroll', onkeydown: listKeys }, body));
+    return h('section', { class: 'list glass', 'aria-label': 'Sessions' }, kids);
+  }
+
+  function detailView(items, card, err) {
+    var open = S.layout === 'half' ? S.sheet : true;
+    var props = { class: 'detail glass-strong', 'aria-label': 'Selected session', onkeydown: detailKeys };
+    if (S.layout === 'half' && open) { props.role = 'dialog'; props['aria-modal'] = 'true'; }
+    if (!card) {
+      return h('section', props, [h('div', { class: 'd-empty', role: 'status' }, [
+        h('span', { class: 'em-icon', 'aria-hidden': 'true' }, [icon(err ? 'alert' : 'check', 'ic-lg')]),
+        h('h2', { text: err ? 'No sessions to show' : (S.data ? 'Nothing needs you right now' : 'Loading sessions…') }),
+        h('p', { text: err ? 'The list comes back on the first good scan.' : (S.data ? 'Checked ' + since(Date.now() - (S.data.generatedAt || Date.now())) : '') })
+      ])]);
+    }
+    var where = projectName(card, items);
+    var link = safeLink(card);
+    var opening = S.opening === card.sessionId;
+    var primary;
+    if (!link) {
+      primary = h('button', { class: 'btn btn-primary is-disabled', type: 'button', disabled: true, 'data-key': 'open' }, ['Open session']);
+    } else if (opening) {
+      primary = h('button', { class: 'btn btn-primary is-loading', type: 'button', disabled: true, 'aria-busy': 'true', 'data-key': 'open' }, [icon('spin', 'ic-sm spin'), 'Opening…']);
+    } else {
+      primary = h('a', { class: 'btn btn-primary', href: link, 'data-key': 'open', onclick: function () { openSession(card); } }, ['Open session', icon('out', 'ic-sm')]);
+    }
+    return h('section', props, [
+      h('div', { class: 'd-head' }, [
+        h('button', { class: 'icon-btn plain only-phone', type: 'button', 'aria-label': 'Back to sessions', 'data-key': 'back', onclick: closeDetail }, [icon('back')]),
+        avatar(card, items),
+        h('div', { class: 'd-who' }, [h('span', { class: 'd-proj', text: where.name }), where.sub ? h('span', { class: 'd-sub', text: where.sub }) : null]),
+        h('span', { class: 'd-wait' }, [icon('clock', 'ic-sm'), timeFor(card, Date.now())]),
+        h('button', { class: 'icon-btn plain only-half', type: 'button', 'aria-label': 'Close session', 'data-key': 'close', onclick: closeDetail }, [icon('close')])
+      ]),
+      h('div', { class: 'd-body' }, [
+        h('h2', { class: 'd-title', text: str(card.title) }),
+        h('div', { class: 'd-meta' }, [badge(card.state), h('span', { class: 'd-repo' }, [icon('folder', 'ic-sm'), str(card.repo)])]),
+        h('div', { class: 'bubble-wrap' }, [
+          h('span', { class: 'bubble-label', text: own(BUBBLE, card.state) || 'Summary' }),
+          h('p', { class: 'bubble' + (card.state === 'stuck' || card.state === 'working' ? ' is-note' : ''), text: noteFor(card, Date.now()) || '—' })
+        ])
+      ]),
+      h('div', { class: 'actions' }, [
+        h('p', { class: 'hint', text: 'Opens it in the Claude app. It stays on this list until its state changes.' }),
+        h('div', { class: 'act-btns' }, card.state === 'working' ? [primary] : [
+          h('button', { class: 'btn btn-tertiary', type: 'button', 'data-key': 'dismiss',
+                        onclick: function () { act(card, 'dismiss', null, 'Dismissed until it changes'); } }, ['Dismiss']),
+          h('div', { class: 'snz' }, [
+            h('button', { class: 'btn btn-secondary', type: 'button', 'aria-haspopup': 'menu', 'aria-expanded': S.menu === 'detail' ? 'true' : 'false',
+                          'data-key': 'snooze', onclick: function () { toggleMenu('detail', 'snooze'); } }, [icon('clock', 'ic-sm'), 'Snooze', icon('down', 'ic-sm')]),
+            S.menu === 'detail' ? h('div', { class: 'menu glass-strong', role: 'menu', 'aria-label': 'Snooze', onkeydown: menuKeys }, menuItems(card, false)) : null
+          ]),
+          primary
+        ])
+      ])
+    ]);
+  }
+  function toastView() {
+    if (!S.toast) return null;
+    return h('div', { class: 'toast', onmouseenter: function () { holdToast(true); }, onmouseleave: function () { holdToast(false); },
+                      onfocusin: function () { holdToast(true); }, onfocusout: function () { holdToast(false); } }, [
+      h('span', { text: S.toast.text }),
+      S.toast.undo ? h('button', { class: 'toast-btn', type: 'button', 'data-key': 'undo',
+                                   onclick: function () { restore(S.toast.undo, true); } }, ['Undo']) : null
+    ]);
+  }
+
+  function headerView(err, late, now) {
+    var d = S.data;
+    var status;
+    if (!d) status = null;
+    else if (err) status = h('span', { class: 'status', role: 'status', text: d.generatedAt ? 'Last scan ' + since(now - d.generatedAt) : 'No scan yet' });
+    else if (late) status = h('span', { class: 'status late', role: 'status' }, [icon('warn', 'ic-sm'), "Scanner hasn't run for " + ago(now - d.generatedAt)]);
+    else status = h('span', { class: 'status', role: 'status' }, [h('span', { class: 'dot', 'aria-hidden': 'true' }), 'Scanned ' + since(now - (d.generatedAt || now)) + ' · ' + (num(d.counts.scanned) || 0) + ' session files']);
+    var t = theme();
+    return h('header', { class: 'hdr' }, [
+      h('h1', { text: 'Sessions needing attention' }),
+      h('div', { class: 'hdr-right' }, [status]),
+      h('button', { class: 'icon-btn hdr-theme', type: 'button', 'aria-label': t === 'light' ? 'Switch to dark theme' : 'Switch to light theme', 'data-key': 'theme:toggle', onclick: function () { setTheme(t === 'light' ? 'dark' : 'light', 'theme:toggle'); } }, [icon(t === 'light' ? 'moon' : 'sun')])
+    ]);
+  }
+
+  function render() {
+    var now = Date.now();
+    var d = S.data;
+    var err = !!(d && d.error);
+    var late = !!(d && !err && d.generatedAt && now - d.generatedAt > LATE_MS);
+    S.layout = opts.layout || layoutFor(window.innerWidth);
+    if (S.layout !== 'half') S.sheet = false;
+    if (S.layout !== 'phone') S.phoneView = 'list';
+
+    var items = menu();
+    // Check the saved view only against real data: before the first load (or during an error) the menu is
+    // just "All", and resetting then would throw the saved project away.
+    if (d && !d.error) {
+      var proj = null;
+      items.forEach(function (p) { if (p.id === S.project) proj = p; });
+      if (!proj) { S.project = 'all'; S.sub = 'all'; }
+      else if (S.sub !== 'all' && S.sub !== 'general' && !proj.children.some(function (c) { return c.id === S.sub; })) S.sub = 'all';
+    }
+    var v = view();
+    var card = S.selected ? byId(v, S.selected) : null;
+    if (!card) {
+      S.selected = null;
+      if (S.layout === 'desktop' && (v.needs.length || v.sched.length)) { card = (v.needs[0] || v.sched[0]); S.selected = card.sessionId; }
+      S.sheet = false; S.phoneView = 'list';
+    }
+
+    // Keep focus and scroll across re-renders (the page re-renders on every poll).
+    var active = document.activeElement;
+    var keepKey = S.focusNext || (active && active.getAttribute && active.getAttribute('data-key'));
+    var oldScroll = document.getElementById('sn-scroll');
+    var scrollTop = oldScroll ? oldScroll.scrollTop : 0;
+
+    var root = h('div', {}, [
+      h('div', { class: 'col' }, [
+        headerView(err, late, now),
+        err ? h('div', { class: 'banner', role: 'alert' }, [icon('alert'), h('div', {}, [h('h2', { text: "Can't show sessions right now" }), h('p', { text: d.error })])]) : null,
+        projectBar(items, err),
+        h('div', { class: 'panes' }, [
+          listView(items, v, err, now),
+          h('div', { class: 'scrim', 'aria-hidden': 'true' }),
+          detailView(items, card, err)
+        ])
+      ]),
+      toastView()
+    ]);
+    app.className = 'sn sn-frame sn-' + theme() + ' lay-' + S.layout + (opts.solid ? ' sn-solid' : '') +
+      (S.layout === 'phone' && S.phoneView === 'session' ? ' pv-session' : '') + (S.layout === 'half' && S.sheet ? ' sheet-open' : '');
+    app.replaceChildren.apply(app, Array.prototype.slice.call(root.childNodes));
+    app.removeAttribute('aria-busy');
+
+    var scroll = document.getElementById('sn-scroll');
+    if (scroll) scroll.scrollTop = scrollTop;
+    if (keepKey) {
+      var target = app.querySelector('[data-key="' + CSS.escape(keepKey) + '"]');
+      // A session without a valid link has a disabled Open button: land on Close or Back instead,
+      // so focus is always inside the slide-over or session view.
+      if (target && target.disabled && S.focusNext) target = app.querySelector('.detail [data-key="close"], .detail [data-key="back"]');
+      if (target && target.getClientRects().length === 0 && S.focusNext === 'open') target = null;
+      if (target && (S.focusNext || active !== document.body)) target.focus({ preventScroll: !S.focusNext });
+    }
+    S.focusNext = null;
+
+    var total = d && !err ? d.main.length + d.scheduled.length : null;
+    // A stopped scanner is as alarming as an error: the count may be wrong, so the tab says "(!)".
+    document.title = !d ? 'Sessions needing attention' : ((err || late) ? '(!) Sessions needing attention' : '(' + total + ') Sessions needing attention');
+    appChrome(!d ? null : (err || late) ? '!' : total);
+  }
+
+  // ---------- Keyboard ----------
+  function rovingKeys(e) {
+    var btns = Array.prototype.slice.call(e.currentTarget.querySelectorAll('button'));
+    var i = btns.indexOf(document.activeElement), j = null;
+    if (i < 0) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') j = Math.min(btns.length - 1, i + 1);
+    else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') j = Math.max(0, i - 1);
+    else if (e.key === 'Home') j = 0;
+    else if (e.key === 'End') j = btns.length - 1;
+    if (j === null) return;
+    e.preventDefault();
+    btns.forEach(function (b) { b.tabIndex = -1; });
+    btns[j].tabIndex = 0;
+    btns[j].focus();
+  }
+  function listKeys(e) {
+    var t = e.target;
+    var sid = t && t.getAttribute && t.getAttribute('data-sid');
+    if (!sid) return;
+    var nav = view().nav.map(function (c) { return c.sessionId; });
+    var i = nav.indexOf(sid), n = null;
+    if (e.key === 'ArrowDown') n = nav[Math.min(nav.length - 1, i + 1)];
+    else if (e.key === 'ArrowUp') n = nav[Math.max(0, i - 1)];
+    else if (e.key === 'Home') n = nav[0];
+    else if (e.key === 'End') n = nav[nav.length - 1];
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (S.layout === 'desktop') {
+        var card = byId(view(), sid);
+        S.selected = sid;
+        if (card && safeLink(card)) { window.location.href = card.link; openSession(card); }
+        render();
+      } else pick(sid, true);
+      return;
+    }
+    if (!n) return;
+    e.preventDefault();
+    if (S.layout === 'desktop') { S.selected = n; }
+    S.focusNext = 'row:' + n;
+    if (S.layout !== 'desktop') {
+      // At 800 and on the phone, arrows only move focus; the slide-over or session view opens with Enter.
+      // The row's More actions button is the next Tab stop after the row.
+      var rows = Array.prototype.slice.call(document.querySelectorAll('#sn-scroll [data-sid], #sn-scroll .more-btn'));
+      rows.forEach(function (r) { r.tabIndex = -1; });
+      var next = document.querySelector('#sn-scroll [data-key="' + CSS.escape('row:' + n) + '"]');
+      var moreBtn = document.querySelector('#sn-scroll [data-key="' + CSS.escape('more:' + n) + '"]');
+      if (moreBtn) moreBtn.tabIndex = 0;
+      if (next) { next.tabIndex = 0; next.focus(); }
+      S.focusNext = null;
+      return;
+    }
+    render();
+  }
+  function detailKeys(e) {
+    if (e.key === 'Tab' && S.layout === 'half' && S.sheet) {
+      var f = Array.prototype.slice.call(e.currentTarget.querySelectorAll('button:not([disabled]), a[href]'))
+        .filter(function (el) { return el.getClientRects().length > 0; });
+      if (!f.length) return;
+      if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+    }
+  }
+  function closeMenu(refocus) {
+    if (!S.menu) return;
+    S.menu = null;
+    if (refocus) S.focusNext = S.menuReturn;
+    render();
+  }
+  function menuKeys(e) {
+    var items = Array.prototype.slice.call(e.currentTarget.querySelectorAll('.menu-item'));
+    var i = items.indexOf(document.activeElement), j = null;
+    if (e.key === 'ArrowDown') j = (i + 1) % items.length;
+    else if (e.key === 'ArrowUp') j = (i - 1 + items.length) % items.length;
+    else if (e.key === 'Home') j = 0;
+    else if (e.key === 'End') j = items.length - 1;
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeMenu(true); return; }
+    else if (e.key === 'Tab') { S.menu = null; S.focusNext = S.menuReturn; e.preventDefault(); render(); return; }
+    if (j === null) return;
+    e.preventDefault();
+    items[j].focus();
+  }
+  // A click anywhere outside an open menu (or its button) closes it.
+  document.addEventListener('click', function (e) {
+    if (!S.menu || !e.target.closest) return;
+    if (e.target.closest('.menu') || e.target.closest('[aria-haspopup="menu"]')) return;
+    closeMenu(false);
+  });
+  document.addEventListener('keydown', function (e) {
+    // ⌘Z (Ctrl+Z) undoes while the toast offers Undo, so keyboard users needn't Tab to it (review finding).
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && (e.key === 'z' || e.key === 'Z') && S.toast && S.toast.undo &&
+        !(e.target && e.target.closest && e.target.closest('input, textarea, [contenteditable]'))) {
+      e.preventDefault();
+      restore(S.toast.undo, true);
+    }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (S.menu) { e.preventDefault(); closeMenu(true); return; }
+    if ((S.layout === 'half' && S.sheet) || (S.layout === 'phone' && S.phoneView === 'session')) {
+      e.preventDefault();
+      closeDetail();
+    }
+  });
+
+  // ---------- Installed app (PWA) ----------
+  // The Dock badge shows the tab-title count; "(!)" becomes a plain dot. The window's title bar follows
+  // the theme. Snapshots (made-up data) never touch the badge or register the service worker.
+  var live = typeof window.__STATUS_SOURCE__ !== 'function';
+  var lastBadge, lastThemeColour;
+  function appChrome(badge) {
+    var colour = theme() === 'dark' ? '#161B22' : '#E3E8EE';
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta && colour !== lastThemeColour) { meta.setAttribute('content', colour); lastThemeColour = colour; }
+    if (!live || !navigator.setAppBadge || badge === lastBadge) return;
+    lastBadge = badge;
+    var p = badge === null || badge === 0 ? navigator.clearAppBadge() : badge === '!' ? navigator.setAppBadge() : navigator.setAppBadge(badge);
+    if (p && p.catch) p.catch(function () { /* not installed, or badges turned off */ });
+  }
+  if (live && 'serviceWorker' in navigator) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () { /* no PWA, page still works */ }); });
+  }
+
+  // ---------- Start ----------
+  window.addEventListener('resize', function () { if (layoutFor(window.innerWidth) !== S.layout) render(); });
+  if (darkQuery && darkQuery.addEventListener) darkQuery.addEventListener('change', function () { if (!S.theme) render(); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
+  render();
+  load();
+  // Poll even while the tab is in the background: that's when the tab-title count is read.
+  setInterval(load, POLL_MS);
+})();
+</script>
+</body>
+</html>

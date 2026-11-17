@@ -1,0 +1,922 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Sessions</title>
+<style>
+  /* Colour tokens. Contrast ratios are listed in design/.../IMPLEMENTATION-NOTES.md.
+     Two base colours (warm paper + near-black ink), one accent (teal) for the primary button and the
+     selected project. Amber = "waiting on you" (stuck/blocked). Red only for errors and a late scanner. */
+  :root {
+    --bg: #f7f6f3; --surface: #ffffff; --surface-2: #efede8; --hover: #e7e4de;
+    --ink: #1e1e1e; --ink-2: #5c5a54; --line: #e2dfd8; --line-strong: #b9b4aa;
+    --accent: #0e6b5c; --accent-hover: #0b5a4d; --accent-press: #094a40; --on-accent: #ffffff;
+    --asked-bg: #1e1e1e; --asked-ink: #ffffff;
+    --wait-bg: #fbf0dc; --wait-ink: #6e4500; --wait-line: #c98f35;
+    --calm-bg: #efede8; --calm-ink: #4f4d47;
+    --error-bg: #fcebea; --error-ink: #a3201c; --error-line: #e8aaa5;
+    --toast-bg: #1e1e1e; --toast-ink: #ffffff;
+    --focus: #0e6b5c;
+    --shadow: 0 1px 2px rgba(30, 30, 30, 0.06);
+    --pop-shadow: 0 8px 24px rgba(30, 30, 30, 0.16);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151514; --surface: #1e1e1c; --surface-2: #2a2926; --hover: #33322e;
+      --ink: #ecebe7; --ink-2: #a8a69f; --line: #32312d; --line-strong: #5a5852;
+      --accent: #5fc4af; --accent-hover: #7ad1bf; --accent-press: #4bae9a; --on-accent: #0c1f1b;
+      --asked-bg: #ecebe7; --asked-ink: #151514;
+      --wait-bg: #3a2b12; --wait-ink: #f3c77e; --wait-line: #8c6626;
+      --calm-bg: #2a2926; --calm-ink: #c4c2bb;
+      --error-bg: #3b1614; --error-ink: #ffa59e; --error-line: #7d2b26;
+      --toast-bg: #ecebe7; --toast-ink: #151514;
+      --focus: #5fc4af;
+      --shadow: none;
+      --pop-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 880px; margin: 0 auto; padding: 32px 24px 96px; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 8px; }
+  button { font: inherit; color: inherit; }
+
+  /* ---------- Header ---------- */
+  header { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
+  h1 { font-size: 24px; line-height: 32px; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+  .scan { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; line-height: 24px; color: var(--ink-2); }
+  .scan::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); }
+  .scan.late {
+    color: var(--error-ink); background: var(--error-bg); border: 1px solid var(--error-line);
+    font-weight: 600; padding: 4px 12px; border-radius: 8px;
+  }
+  .scan.late::before { background: var(--error-ink); }
+
+  /* ---------- Project menu ---------- */
+  .menu { margin-top: 24px; }
+  .tabs {
+    display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line);
+    scroll-snap-type: x proximity; padding: 0 2px;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: none; display: inline-flex; align-items: center; gap: 8px; height: 48px; padding: 0 12px;
+    background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer;
+    color: var(--ink-2); font-weight: 500; white-space: nowrap; scroll-snap-align: start; border-radius: 8px 8px 0 0;
+  }
+  .tab:hover { color: var(--ink); background: var(--surface-2); }
+  .tab:active { background: var(--hover); }
+  .tab[aria-pressed="true"] { color: var(--ink); font-weight: 650; border-bottom-color: var(--accent); }
+  .tab.has-items { color: var(--ink); }
+  .tab.soon { font-style: normal; }
+  .tab .soon-label { font-size: 12px; color: var(--ink-2); font-weight: 500; }
+  .tabs .sep { flex: none; width: 1px; background: var(--line); margin: 12px 4px; }
+
+  .count {
+    display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; padding: 0 8px;
+    border-radius: 12px; background: var(--calm-bg); color: var(--ink); font-size: 12px; font-weight: 650;
+    font-variant-numeric: tabular-nums;
+  }
+  .asked-count {
+    display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 6px;
+    background: var(--asked-bg); color: var(--asked-ink); font-size: 12px; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .subs { display: flex; gap: 4px; margin-top: 16px; padding: 4px; background: var(--surface-2); border-radius: 12px;
+    width: max-content; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .subs::-webkit-scrollbar { display: none; }
+  .sub {
+    flex: none; display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px;
+    border: 1px solid transparent; border-radius: 8px; background: none; cursor: pointer; color: var(--ink-2);
+    font-weight: 500; white-space: nowrap;
+  }
+  .sub:hover { color: var(--ink); background: var(--hover); }
+  .sub[aria-pressed="true"] { background: var(--surface); border-color: var(--line-strong); color: var(--ink);
+    font-weight: 650; box-shadow: var(--shadow); }
+  .sub.has-items { color: var(--ink); }
+
+  /* ---------- Banner (error) ---------- */
+  .banner {
+    margin-top: 24px; padding: 16px 24px; border-radius: 12px; border: 1px solid var(--error-line);
+    background: var(--error-bg); color: var(--error-ink);
+  }
+  .banner strong { display: block; font-size: 16px; line-height: 24px; }
+  .banner p { margin: 8px 0 0; color: var(--ink); max-width: 68ch; overflow-wrap: anywhere; }
+  .banner .hint { color: var(--ink); font-size: 13px; }
+  @media (prefers-color-scheme: dark) { .banner p, .banner .hint { color: var(--ink); } }
+
+  /* ---------- Sections ---------- */
+  section, details.sec { margin-top: 40px; }
+  .sec-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 16px; }
+  h2 { font-size: 18px; line-height: 24px; font-weight: 650; margin: 0; }
+  .elsewhere { margin: -8px 0 16px; font-size: 14px; color: var(--ink-2); display: flex; align-items: center;
+    gap: 8px; flex-wrap: wrap; }
+
+  details.sec > summary {
+    list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 48px;
+    margin: 0 -12px 8px; padding: 0 12px; border-radius: 8px;
+  }
+  details.sec > summary::-webkit-details-marker { display: none; }
+  details.sec > summary:hover { background: var(--surface-2); }
+  .chev { width: 16px; height: 16px; flex: none; transition: transform 120ms ease; color: var(--ink-2); }
+  details[open] > summary .chev { transform: rotate(90deg); }
+  .sec-desc { color: var(--ink-2); font-size: 13px; margin-left: auto; }
+  .toggle-word { color: var(--ink); font-size: 14px; font-weight: 600; }
+  details.sec .sec-desc { margin-left: 8px; }
+  details.sec .toggle-word { margin-left: auto; }
+
+  /* ---------- Needs-you cards ---------- */
+  .cards { display: grid; gap: 8px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow);
+    padding: 16px 24px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px;
+    grid-template-areas: "head when" "needs needs" "meta actions";
+  }
+  .card.asked { border-color: var(--line-strong); }
+  .head { grid-area: head; display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
+  .title { font-size: 16px; line-height: 24px; font-weight: 650; overflow-wrap: anywhere; min-width: 0; margin: 0; }
+  .when { grid-area: when; font-size: 13px; line-height: 24px; color: var(--ink-2); white-space: nowrap;
+    font-variant-numeric: tabular-nums; }
+  .needs {
+    grid-area: needs; max-width: 68ch; overflow-wrap: anywhere; margin: 0;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .needs.inferred { color: var(--ink-2); font-style: italic; }
+  .meta { grid-area: meta; align-self: center; font-size: 13px; line-height: 20px; color: var(--ink-2); min-width: 0;
+    overflow-wrap: anywhere; }
+  .actions { grid-area: actions; display: flex; gap: 8px; align-items: center; justify-content: flex-end;
+    position: relative; }
+
+  /* ---------- Chips ---------- */
+  .chip {
+    flex: none; display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 6px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;
+    border: 1px solid transparent;
+  }
+  .chip.asked { background: var(--asked-bg); color: var(--asked-ink); }
+  .chip.stuck { background: var(--wait-bg); color: var(--wait-ink); border: 1px dashed var(--wait-line); }
+  .chip.blocked { background: var(--wait-bg); color: var(--wait-ink); border-color: var(--wait-line); }
+  .chip.review_ready { background: var(--calm-bg); color: var(--calm-ink); }
+  .chip.unread { background: transparent; color: var(--calm-ink); border-color: var(--line-strong); }
+  /* In Stale / Quieter / Hidden every chip goes neutral: colour is for Needs you only. */
+  .rows .chip { background: transparent; color: var(--calm-ink); border: 1px solid var(--line-strong); }
+  .rows .chip.stuck { border-style: dashed; }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 16px;
+    border-radius: 8px; border: 1px solid transparent; font-size: 14px; font-weight: 600; line-height: 1;
+    text-decoration: none; cursor: pointer; white-space: nowrap; user-select: none;
+    transition: background 80ms ease, border-color 80ms ease, transform 60ms ease;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled, .btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; transform: none; }
+  .btn-primary { background: var(--accent); color: var(--on-accent); }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:active { background: var(--accent-press); }
+  .btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--line-strong); }
+  .btn-secondary:hover { background: var(--surface-2); }
+  .btn-secondary:active { background: var(--hover); }
+  .btn-tertiary { background: transparent; color: var(--ink); padding: 0 12px; }
+  .btn-tertiary:hover { background: var(--surface-2); }
+  .btn-tertiary:active { background: var(--hover); }
+  .btn[aria-busy="true"] { cursor: progress; }
+  .btn[aria-busy="true"]::before {
+    content: ""; width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor;
+    border-right-color: transparent; animation: spin 700ms linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .btn[aria-busy="true"]::before { animation: none; } * { transition: none !important; } }
+  .caret { width: 12px; height: 12px; }
+
+  /* ---------- Snooze menu ---------- */
+  .pop {
+    position: absolute; right: 0; top: calc(100% + 8px); z-index: 10; min-width: 264px; padding: 8px;
+    background: var(--surface); border: 1px solid var(--line-strong); border-radius: 12px; box-shadow: var(--pop-shadow);
+  }
+  .pop button {
+    display: flex; flex-direction: column; align-items: flex-start; width: 100%; min-height: 48px; padding: 8px 12px;
+    background: none; border: 0; border-radius: 8px; cursor: pointer; text-align: left;
+  }
+  .pop button:hover, .pop button:focus-visible { background: var(--surface-2); outline-offset: -2px; }
+  .pop .lbl { font-weight: 600; font-size: 14px; line-height: 20px; }
+  .pop .det { font-size: 13px; line-height: 20px; color: var(--ink-2); }
+
+  /* ---------- Secondary rows (Stale, Quieter, Hidden) ---------- */
+  .rows { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .row {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 16px; align-items: center;
+    padding: 8px 8px 8px 16px; border-top: 1px solid var(--line);
+  }
+  .row:first-child { border-top: 0; }
+  .row-main { min-width: 0; padding: 4px 0; }
+  .row-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .row-title { font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row-sub { font-size: 13px; line-height: 20px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; margin-top: 4px; }
+  .row-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* ---------- Empty state ---------- */
+  .empty {
+    display: flex; gap: 16px; align-items: flex-start; padding: 24px; border: 1px dashed var(--line-strong);
+    border-radius: 12px;
+  }
+  .empty svg { flex: none; width: 24px; height: 24px; color: var(--accent); margin-top: 0; }
+  .empty strong { display: block; font-size: 16px; line-height: 24px; }
+  .empty p { margin: 4px 0 0; color: var(--ink-2); }
+  .empty .btn { margin-top: 8px; margin-left: -12px; }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 20;
+    display: flex; align-items: center; gap: 16px; max-width: calc(100vw - 32px); padding: 8px 8px 8px 16px;
+    background: var(--toast-bg); color: var(--toast-ink); border-radius: 12px; box-shadow: var(--pop-shadow);
+  }
+  .toast-msg { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+  .toast .btn { color: var(--toast-ink); border-color: currentColor; background: transparent; height: 40px; }
+  .toast .btn:hover { background: rgba(127, 127, 127, 0.2); }
+
+  /* ---------- Narrow ---------- */
+  @media (max-width: 640px) {
+    main { padding: 24px 16px 96px; }
+    .card { padding: 16px; grid-template-areas: "head head" "when when" "needs needs" "meta meta" "actions actions"; }
+    .when { margin-top: -8px; }
+    .actions { justify-content: flex-start; flex-wrap: wrap; }
+    .actions .open { order: -1; }
+    .pop { left: 0; right: auto; }
+    .row { grid-template-columns: 1fr; padding: 8px 16px; }
+    .row-actions { margin: 4px 0 0 -12px; }
+    .row-title { white-space: normal; }
+    .sec-desc { display: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Sessions needing attention</h1>
+    <span class="scan" id="scan" role="status">Loading…</span>
+  </header>
+
+  <nav class="menu" id="menu" aria-label="Projects" hidden>
+    <div class="tabs" id="tabs"></div>
+    <div class="subs" id="subs" hidden></div>
+  </nav>
+
+  <div id="banner" class="banner" role="alert" hidden>
+    <strong id="banner-title">Can't read session status</strong>
+    <p id="banner-text"></p>
+    <p class="hint" id="banner-hint">The list is hidden so it can't show a wrong count. Check <code>logs/scanner.log</code>.</p>
+  </div>
+
+  <div id="lists">
+    <section aria-labelledby="main-h">
+      <div class="sec-head"><h2 id="main-h">Needs you</h2><span class="count" id="main-n">0</span><span class="asked-count" id="main-asked" hidden></span></div>
+      <div class="elsewhere" id="main-elsewhere" hidden></div>
+      <div class="cards" id="main"></div>
+    </section>
+
+    <details class="sec" id="stale-box" data-key="stale">
+      <summary><svg class="chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><h2>Stale: archive or revive?</h2><span class="count" id="stale-n">0</span><span class="sec-desc">Blocked or stuck for over 7 days</span><span class="toggle-word"></span></summary>
+      <div class="rows" id="stale"></div>
+    </details>
+
+    <details class="sec" id="quiet-box" data-key="quiet" open>
+      <summary><svg class="chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><h2>Quieter: review-ready or unread</h2><span class="count" id="quiet-n">0</span><span class="sec-desc">Finished, nothing blocked</span><span class="toggle-word"></span></summary>
+      <div class="rows" id="quiet"></div>
+    </details>
+
+    <details class="sec" id="hidden-box" data-key="hidden">
+      <summary><svg class="chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><h2>Hidden: snoozed or dismissed</h2><span class="count" id="hidden-n">0</span><span class="sec-desc">Only on this page; the app is unchanged</span><span class="toggle-word"></span></summary>
+      <div class="rows" id="hidden"></div>
+    </details>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden>
+  <span class="toast-msg" id="toast-msg"></span>
+  <button type="button" class="btn" id="toast-undo">Undo</button>
+</div>
+
+<script>window.__FIXTURE__ = {"schema": 1, "error": null, "generatedAgoMs": 20000, "projects": [{"id": "client-a", "name": "Client A", "children": [{"id": "client-a/us", "name": "Client A US"}, {"id": "client-a/canada", "name": "Client A Canada"}]}, {"id": "client-b", "name": "Client B", "comingSoon": true, "children": []}, {"id": "client-c", "name": "Client C", "comingSoon": true, "children": []}, {"id": "tools", "name": "Internal Tools", "children": []}, {"id": "kb", "name": "Knowledge Base", "children": []}, {"id": "other", "name": "Other", "children": []}], "main": [{"sessionId": "local_example-00", "title": "TICKET-231 Lead routing: local test calls", "repo": "client-a-bot-canada", "org": "acct/org", "state": "asked", "project": "client-a", "subproject": "client-a/canada", "needs": "Will you make the two test calls now?", "lastActivityAgoMs": 1500000, "link": "claude://claude.ai/epitaxy/local_example-00"}, {"sessionId": "local_example-01", "title": "TICKET-218 Out-of-coverage reply", "repo": "client-a-bot-canada", "org": "acct/org", "state": "asked", "project": "client-a", "subproject": "client-a/canada", "needs": "Send me the call ID once you've made the call?", "lastActivityAgoMs": 3600000, "link": "claude://claude.ai/epitaxy/local_example-01"}, {"sessionId": "local_example-02", "title": "TICKET-240 Web chat: foreign address", "repo": "client-a-bot (worktree)", "org": "acct/org", "state": "asked", "project": "client-a", "subproject": "client-a/us", "needs": "Run the regression check now, or ship as is?", "lastActivityAgoMs": 480000, "link": "claude://claude.ai/epitaxy/local_example-02"}, {"sessionId": "local_example-03", "title": "TICKET-207 Contact text update", "repo": "client-a-bot-canada", "org": "acct/org", "state": "stuck", "project": "client-a", "subproject": "client-a/canada", "needs": "", "lastActivityAgoMs": 79200000, "link": "claude://claude.ai/epitaxy/local_example-03"}, {"sessionId": "local_example-04", "title": "Test dashboard port conflict", "repo": "internal-tools", "org": "acct/org", "state": "blocked", "project": "tools", "subproject": null, "needs": "Stop the old dashboard on port 8110, then tell me to restart it", "lastActivityAgoMs": 10800000, "link": "claude://claude.ai/epitaxy/local_example-04"}, {"sessionId": "local_example-05", "title": "Latest config changes", "repo": "knowledge-base", "org": "acct/org", "state": "blocked", "project": "kb", "subproject": null, "needs": "Pick a fix: drop the transfer step (my pick) or reorder the steps", "lastActivityAgoMs": 172800000, "link": "claude://claude.ai/epitaxy/local_example-05"}], "scheduled": [{"sessionId": "local_example-06", "title": "Scheduled task: chat-mention-ping", "repo": "chat-ping", "org": "acct/org", "state": "blocked", "project": "other", "subproject": null, "needs": "Sign the chat connector back in with /mcp", "lastActivityAgoMs": 240000, "link": "claude://claude.ai/epitaxy/local_example-06"}], "stale": [{"sessionId": "local_example-07", "title": "Multi-phase ticket planning", "repo": "client-a-bot-canada", "org": "acct/org", "state": "stuck", "project": "client-a", "subproject": "client-a/canada", "needs": "", "lastActivityAgoMs": 1036800000, "link": "claude://claude.ai/epitaxy/local_example-07"}, {"sessionId": "local_example-08", "title": "Country analytics from phone number", "repo": "client-a-bot-canada", "org": "acct/org", "state": "blocked", "project": "client-a", "subproject": "client-a/canada", "needs": "Confirm the reporting tenant before I post the request", "lastActivityAgoMs": 1728000000, "link": "claude://claude.ai/epitaxy/local_example-08"}, {"sessionId": "local_example-09", "title": "Examples showcase phase 0", "repo": "knowledge-base", "org": "acct/org", "state": "blocked", "project": "kb", "subproject": null, "needs": "Commit and push, or review first?", "lastActivityAgoMs": 3196800000, "link": "claude://claude.ai/epitaxy/local_example-09"}, {"sessionId": "local_example-10", "title": "Claude settings: permissions default", "repo": "scratch", "org": "acct/org", "state": "blocked", "project": "other", "subproject": null, "needs": "Check the status line for auto mode; press Shift+Tab if it's off", "lastActivityAgoMs": 3801600000, "link": "claude://claude.ai/epitaxy/local_example-10"}], "quiet": [{"sessionId": "local_example-11", "title": "TICKET-241 Office number fallback", "repo": "client-a-bot-canada", "org": "acct/org", "state": "review_ready", "project": "client-a", "subproject": "client-a/canada", "needs": "Down to the last run: regression check", "lastActivityAgoMs": 240000, "link": "claude://claude.ai/epitaxy/local_example-11"}, {"sessionId": "local_example-12", "title": "Voice handoff with foreign address", "repo": "client-a-bot", "org": "acct/org", "state": "review_ready", "project": "client-a", "subproject": "client-a/us", "needs": "Replied on both review threads; open gaps go into the drafts", "lastActivityAgoMs": 1123200000, "link": "claude://claude.ai/epitaxy/local_example-12"}, {"sessionId": "local_example-13", "title": "Flow map: path shown by default", "repo": "internal-tools", "org": "acct/org", "state": "unread", "project": "tools", "subproject": null, "needs": "Bordered 'Read again' button added; checked at 1500 px", "lastActivityAgoMs": 432000000, "link": "claude://claude.ai/epitaxy/local_example-13"}, {"sessionId": "local_example-14", "title": "TICKET-190 Ticket inquiry", "repo": "client-a-bot-canada", "org": "acct/org", "state": "unread", "project": "client-a", "subproject": "client-a/canada", "needs": "Integration logs checked; spec updated, not committed", "lastActivityAgoMs": 691200000, "link": "claude://claude.ai/epitaxy/local_example-14"}, {"sessionId": "local_example-15", "title": "Release walkthrough docs", "repo": "knowledge-base", "org": "acct/org", "state": "unread", "project": "kb", "subproject": null, "needs": "Docs updated; deploy table fixed", "lastActivityAgoMs": 777600000, "link": "claude://claude.ai/epitaxy/local_example-15"}, {"sessionId": "local_example-16", "title": "Mac scheduler app", "repo": "scheduler-app", "org": "acct/org", "state": "unread", "project": "other", "subproject": null, "needs": "Login item registered; restart to verify", "lastActivityAgoMs": 604800000, "link": "claude://claude.ai/epitaxy/local_example-16"}], "hidden": [], "problems": [], "counts": {"main": 7, "asked": 3, "stale": 4, "quiet": 6, "hidden": 0, "scanned": 120}};</script>
+<script>
+window.__STATUS_SOURCE__ = function () {
+  const s = JSON.parse(JSON.stringify(window.__FIXTURE__));
+  const now = Date.now();
+  const state = new URLSearchParams(location.search).get("state") || "normal";
+  s.generatedAt = now - (state === "late" ? 9 * 60000 : s.generatedAgoMs);
+  for (const k of ["main", "scheduled", "stale", "quiet"])
+    for (const c of s[k]) c.lastActivityAt = now - c.lastActivityAgoMs;
+  if (state === "error") return { error: "Can't read session status, format may have changed (361 of 361 files unreadable)." };
+  if (state === "empty") { s.main = []; s.scheduled = []; s.counts.main = 0; s.counts.asked = 0; }
+  return s;
+};
+</script>
+<script>
+"use strict";
+const POLL_MS = 30_000;
+const SCANNER_LATE_MS = 3 * 60_000; // the scanner runs every 60 s
+const TOAST_MS = 8_000;
+const CHIP = { asked: "asked", blocked: "blocked", stuck: "stuck", review_ready: "review", unread: "unread" };
+const STUCK_NOTE = "Turn started but never finished: may be a permission prompt or a slow tool.";
+const SECTIONS = ["main", "stale", "quiet"]; // "scheduled" renders inside main
+const GENERAL = ":general"; // view key suffix for "in a project with sub-projects, but no sub-project"
+const LS_VIEW = "sna.view", LS_OPEN = "sna.open", LS_STATE = "sna.state";
+const SNAPSHOT = typeof window.__STATUS_SOURCE__ === "function"; // design snapshot: no server, state stays local
+
+const S = {
+  status: null,            // last status.json
+  hidden: {},              // sessionId -> {kind:"snooze", until} | {kind:"dismiss", lastActivityAt}
+  view: readView(),        // "all" | project id | sub-project id | project id + GENERAL
+  busy: new Set(),         // sessionIds with a save in flight
+  pop: null,               // open snooze menu {sid, el}
+  toast: null,
+};
+
+/* ---------- small helpers ---------- */
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined && text !== null) n.textContent = text; // textContent only: titles come from session data
+  return n;
+}
+function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch { /* private window: fine */ } }
+function age(ms) {
+  const m = Math.max(0, Math.floor(ms / 60000));
+  if (m < 1) return "under 1m";
+  if (m < 60) return `${m}m`;
+  if (m < 48 * 60) return `${Math.floor(m / 60)}h`;
+  return `${Math.floor(m / 1440)}d`;
+}
+function clock(ms) { return new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
+function untilText(ms) {
+  const d = new Date(ms), now = new Date();
+  const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1);
+  if (d.toDateString() === now.toDateString()) return clock(ms);
+  if (d.toDateString() === tomorrow.toDateString()) return `tomorrow ${clock(ms)}`;
+  return d.toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" });
+}
+function nextNine() {
+  // "Until tomorrow 9:00". In the small hours, 9:00 the same day is what "tomorrow morning" means.
+  const d = new Date(); const t = new Date(d);
+  t.setHours(9, 0, 0, 0);
+  if (d.getHours() >= 5) t.setDate(t.getDate() + 1);
+  return t.getTime();
+}
+function svg(path, cls) {
+  const ns = "http://www.w3.org/2000/svg";
+  const s = document.createElementNS(ns, "svg");
+  s.setAttribute("viewBox", "0 0 16 16"); s.setAttribute("aria-hidden", "true");
+  if (cls) s.setAttribute("class", cls);
+  const p = document.createElementNS(ns, "path");
+  p.setAttribute("d", path); p.setAttribute("fill", "none"); p.setAttribute("stroke", "currentColor");
+  p.setAttribute("stroke-width", "2"); p.setAttribute("stroke-linecap", "round"); p.setAttribute("stroke-linejoin", "round");
+  s.append(p);
+  return s;
+}
+
+/* ---------- hide rules (same as is_hidden() in scanner.py) ---------- */
+function isHidden(c, now = Date.now()) {
+  const e = S.hidden[c.sessionId];
+  if (!e) return false;
+  if (e.kind === "snooze") return now < e.until;
+  if (e.kind === "dismiss") return (c.lastActivityAt || 0) <= e.lastActivityAt;
+  return false;
+}
+
+/* ---------- projects and the current view ---------- */
+function projects() { return (S.status && Array.isArray(S.status.projects)) ? S.status.projects : []; }
+function readView() {
+  const h = decodeURIComponent(location.hash.replace(/^#/, ""));
+  return h || lsGet(LS_VIEW) || "all";
+}
+function parseView(key) {
+  if (key === "all") return { p: null, s: null };
+  for (const p of projects()) {
+    if (p.id === key) return { p: p.id, s: null };
+    if (key === p.id + GENERAL) return { p: p.id, s: GENERAL };
+    for (const c of p.children || []) if (c.id === key) return { p: p.id, s: c.id };
+  }
+  return { p: null, s: null }; // unknown (project removed): show everything
+}
+function inView(c, v) {
+  if (!v.p) return true;
+  if (c.project !== v.p) return false;
+  if (!v.s) return true;
+  if (v.s === GENERAL) return !c.subproject;
+  return c.subproject === v.s;
+}
+function setView(key, { focus } = {}) {
+  S.view = key;
+  lsSet(LS_VIEW, key);
+  const hash = key === "all" ? "" : `#${encodeURIComponent(key)}`;
+  if (location.hash !== hash) history.replaceState(null, "", hash || location.pathname + location.search);
+  render();
+  const btn = document.querySelector(`[data-view="${CSS.escape(key)}"]`);
+  if (btn) { btn.scrollIntoView({ block: "nearest", inline: "nearest" }); if (focus) btn.focus(); }
+}
+function projectName(id) {
+  for (const p of projects()) {
+    if (p.id === id) return p.name;
+    for (const c of p.children || []) if (c.id === id) return c.name;
+  }
+  return id || "";
+}
+function shortSubName(parent, child) {
+  // "Merry Maids Canada" under "Merry Maids" reads as "Canada".
+  return child.name.startsWith(parent.name + " ") ? child.name.slice(parent.name.length + 1) : child.name;
+}
+
+/* ---------- cards from status.json ---------- */
+function allCards() {
+  const s = S.status, out = [];
+  for (const key of ["main", "scheduled", "stale", "quiet"])
+    for (const c of s[key] || []) out.push({ ...c, section: key === "scheduled" ? "main" : key });
+  for (const c of s.hidden || []) out.push({ ...c, section: c.section === "scheduled" ? "main" : c.section });
+  return out;
+}
+function split(cards) {
+  const now = Date.now(), lists = { main: [], stale: [], quiet: [], hidden: [] };
+  for (const c of cards) (isHidden(c, now) ? lists.hidden : lists[c.section] || lists.quiet).push(c);
+  const order = { asked: 0, stuck: 1, blocked: 2, review_ready: 3, unread: 4 };
+  for (const k in lists) lists[k].sort((a, b) => (order[a.state] - order[b.state]) || (b.lastActivityAt - a.lastActivityAt));
+  return lists;
+}
+function tally(cards) {
+  return { n: cards.length, asked: cards.filter(c => c.state === "asked").length };
+}
+
+/* ---------- rendering ---------- */
+function render() {
+  const s = S.status;
+  if (!s) return;
+  const focusKey = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.focus : null;
+
+  const banner = document.getElementById("banner"), lists = document.getElementById("lists");
+  const menu = document.getElementById("menu"), scan = document.getElementById("scan");
+  if (s.error) {
+    document.getElementById("banner-title").textContent =
+      s.unreachable ? "Can't reach the dashboard server" : "Can't read session status";
+    document.getElementById("banner-text").textContent = s.error;
+    document.getElementById("banner-hint").hidden = !!s.unreachable;
+    banner.hidden = false; lists.hidden = true; menu.hidden = true;
+    scan.className = "scan"; scan.textContent = s.unreachable ? "Not connected" : "";
+    scan.hidden = !s.unreachable;
+    document.title = "(!) Sessions";
+    return;
+  }
+  banner.hidden = true; lists.hidden = false; scan.hidden = false;
+
+  const cards = allCards();
+  const everything = split(cards);
+  const v = parseView(S.view);
+  const filtered = split(cards.filter(c => inView(c, v)));
+
+  // Tab title: the total across every project, so a filter never hides work.
+  const total = everything.main.length;
+  document.title = total ? `(${total}) Sessions` : "Sessions";
+
+  renderMenu(everything.main, cards, v);
+  renderScan(s);
+
+  const showOrg = new Set(cards.map(c => c.org)).size > 1;
+  const ctx = { v, showOrg };
+
+  // Needs you
+  const main = filtered.main, t = tally(main);
+  document.getElementById("main-n").textContent = t.n;
+  const askedEl = document.getElementById("main-asked");
+  askedEl.hidden = !t.asked; askedEl.textContent = `${t.asked} asked`;
+  const elsewhere = everything.main.length - main.length;
+  const ew = document.getElementById("main-elsewhere");
+  ew.replaceChildren();
+  if (v.p && elsewhere > 0 && main.length) {
+    ew.append(el("span", null, `${elsewhere} more ${elsewhere === 1 ? "needs" : "need"} you in other projects.`), showAllButton());
+    ew.hidden = false;
+  } else ew.hidden = true;
+
+  const mainRoot = document.getElementById("main");
+  if (main.length) mainRoot.replaceChildren(...main.map((c, i) => card(c, i === 0, ctx)));
+  else mainRoot.replaceChildren(emptyState(v, elsewhere, filtered));
+
+  fillRows("stale", filtered.stale, ctx);
+  fillRows("quiet", filtered.quiet, ctx);
+  fillRows("hidden", filtered.hidden, ctx);
+
+  if (focusKey) {
+    const target = document.querySelector(`[data-focus="${CSS.escape(focusKey)}"]`);
+    if (target) target.focus({ preventScroll: true });
+  }
+}
+
+function renderScan(s) {
+  const scan = document.getElementById("scan");
+  const ago = Date.now() - s.generatedAt;
+  const late = ago > SCANNER_LATE_MS;
+  scan.className = late ? "scan late" : "scan";
+  const files = s.counts && s.counts.scanned ? ` · ${s.counts.scanned} session files` : "";
+  scan.textContent = late
+    ? `Scanner stopped ${age(ago)} ago. This list may be out of date.`
+    : `Scanned ${ago < 60000 ? "just now" : age(ago) + " ago"}${files}`;
+}
+
+function countBadges(btn, t) {
+  if (t.n) btn.append(el("span", "count", t.n));
+  if (t.asked) btn.append(el("span", "asked-count", `${t.asked} asked`));
+}
+
+function renderMenu(mainAll, cards, v) {
+  const menu = document.getElementById("menu"), tabs = document.getElementById("tabs"), subs = document.getElementById("subs");
+  const list = projects();
+  if (!list.length) { menu.hidden = true; return; }
+  menu.hidden = false;
+  const items = [{ key: "all", label: "All", t: tally(mainAll), soon: false }];
+  const later = [];
+  for (const p of list) {
+    const has = cards.some(c => c.project === p.id);
+    const it = { key: p.id, label: p.name, t: tally(mainAll.filter(c => c.project === p.id)), soon: !!p.comingSoon && !has };
+    (it.soon ? later : items).push(it);
+  }
+  const btns = [];
+  const make = (it) => {
+    const b = el("button", "tab" + (it.t.n ? " has-items" : "") + (it.soon ? " soon" : ""));
+    b.type = "button"; b.dataset.view = it.key; b.dataset.focus = `tab:${it.key}`;
+    const selected = it.key === "all" ? !v.p : v.p === it.key;
+    b.setAttribute("aria-pressed", String(selected));
+    b.append(el("span", null, it.label));
+    if (it.soon) b.append(el("span", "soon-label", "soon"));
+    else countBadges(b, it.t);
+    const n = btns.length + 1;
+    b.title = (it.soon ? `${it.label}: no sessions yet` : `${it.label}: ${it.t.n} need you`) + (n <= 9 ? ` (key ${n})` : "");
+    b.setAttribute("aria-label", it.soon ? `${it.label}, coming soon, no sessions yet`
+      : `${it.label}, ${it.t.n} need you${it.t.asked ? `, ${it.t.asked} asked` : ""}`);
+    b.addEventListener("click", () => setView(it.key));
+    btns.push(b);
+    return b;
+  };
+  const nodes = items.map(make);
+  if (later.length) { const sep = el("span", "sep"); sep.setAttribute("aria-hidden", "true"); nodes.push(sep, ...later.map(make)); }
+  tabs.replaceChildren(...nodes);
+
+  // Sub-projects: shown once a project with sub-projects is selected, with their counts.
+  const parent = list.find(p => p.id === v.p);
+  if (!parent || !(parent.children || []).length) { subs.hidden = true; subs.replaceChildren(); return; }
+  const inParent = mainAll.filter(c => c.project === parent.id);
+  const subItems = [{ key: parent.id, label: `All ${parent.name}`, t: tally(inParent) }];
+  for (const ch of parent.children) subItems.push({ key: ch.id, label: shortSubName(parent, ch), t: tally(inParent.filter(c => c.subproject === ch.id)) });
+  if (cards.some(c => c.project === parent.id && !c.subproject))
+    subItems.push({ key: parent.id + GENERAL, label: "General", t: tally(inParent.filter(c => !c.subproject)) });
+  subs.replaceChildren(...subItems.map(it => {
+    const b = el("button", "sub" + (it.t.n ? " has-items" : ""));
+    b.type = "button"; b.dataset.view = it.key; b.dataset.focus = `sub:${it.key}`;
+    const selected = it.key === parent.id ? !v.s : (v.s === it.key || (it.key.endsWith(GENERAL) && v.s === GENERAL));
+    b.setAttribute("aria-pressed", String(selected));
+    b.append(el("span", null, it.label));
+    countBadges(b, it.t);
+    b.setAttribute("aria-label", `${it.label}, ${it.t.n} need you${it.t.asked ? `, ${it.t.asked} asked` : ""}`);
+    b.addEventListener("click", () => setView(it.key));
+    return b;
+  }));
+  subs.hidden = false;
+}
+
+function placeLabel(c, v) {
+  // Under All: the project (or sub-project). Inside a project: the sub-project. Inside a sub-project: nothing.
+  if (!v.p) return c.subproject ? projectName(c.subproject) : projectName(c.project);
+  if (!v.s) {
+    const p = projects().find(x => x.id === v.p);
+    if (p && (p.children || []).length) return c.subproject ? shortSubName(p, p.children.find(x => x.id === c.subproject) || { name: projectName(c.subproject) }) : "General";
+  }
+  return "";
+}
+function metaText(c, ctx) {
+  return [placeLabel(c, ctx.v), c.repo, ctx.showOrg ? c.org : ""].filter(Boolean).join(" · ");
+}
+
+function openLink(c, cls, label) {
+  if (typeof c.link !== "string" || !c.link.startsWith("claude://")) return null;
+  const a = el("a", `btn ${cls} open`, label);
+  a.href = c.link;
+  a.dataset.focus = `open:${c.sessionId}`;
+  a.setAttribute("aria-label", `Open session: ${c.title}`);
+  a.addEventListener("click", () => {
+    // Immediate feedback: the app takes a second or two to switch.
+    a.setAttribute("aria-busy", "true"); a.textContent = "Opening…";
+    setTimeout(() => { a.removeAttribute("aria-busy"); a.textContent = label; }, 2000);
+  });
+  return a;
+}
+
+function card(c, first, ctx) {
+  const box = el("article", `card ${c.state}`);
+  box.dataset.sid = c.sessionId;
+  const head = el("div", "head");
+  head.append(el("span", `chip ${c.state}`, CHIP[c.state] || c.state), el("h3", "title", c.title));
+  const when = el("span", "when", `waiting ${age(Date.now() - (c.lastActivityAt || Date.now()))}`);
+  box.append(head, when);
+  const needsText = c.needs || (c.state === "stuck" ? STUCK_NOTE : "");
+  if (needsText) {
+    const n = el("p", "needs" + (c.needs ? "" : " inferred"), needsText);
+    n.title = needsText;
+    box.append(n);
+  }
+  box.append(el("div", "meta", metaText(c, ctx)));
+
+  const actions = el("div", "actions");
+  const busy = S.busy.has(c.sessionId);
+  const snooze = el("button", "btn btn-tertiary");
+  snooze.type = "button"; snooze.dataset.focus = `snooze:${c.sessionId}`;
+  snooze.setAttribute("aria-haspopup", "menu"); snooze.setAttribute("aria-expanded", "false");
+  snooze.append(el("span", null, "Snooze"), svg("M4 6l4 4 4-4", "caret"));
+  snooze.setAttribute("aria-label", `Snooze: ${c.title}`);
+  snooze.disabled = busy;
+  snooze.addEventListener("click", (e) => { e.stopPropagation(); togglePop(c, snooze, actions); });
+  const dismiss = el("button", "btn btn-tertiary", "Dismiss");
+  dismiss.type = "button"; dismiss.dataset.focus = `dismiss:${c.sessionId}`;
+  dismiss.title = "Hide until this session posts a new turn";
+  dismiss.setAttribute("aria-label", `Dismiss until it changes: ${c.title}`);
+  dismiss.disabled = busy;
+  dismiss.addEventListener("click", () => hide(c, { kind: "dismiss", lastActivityAt: c.lastActivityAt || 0 }));
+  actions.append(snooze, dismiss);
+  // One filled primary per screen: the top card. The rest are outlined.
+  const open = openLink(c, first ? "btn-primary" : "btn-secondary", "Open session");
+  if (open) actions.append(open);
+  box.append(actions);
+  return box;
+}
+
+function row(c, ctx, kind) {
+  const r = el("div", "row");
+  r.dataset.sid = c.sessionId;
+  const mainCol = el("div", "row-main");
+  const head = el("div", "row-head");
+  head.append(el("span", `chip ${c.state}`, CHIP[c.state] || c.state), el("span", "row-title", c.title));
+  head.lastChild.title = c.title;
+  mainCol.append(head);
+  const waited = age(Date.now() - (c.lastActivityAt || Date.now()));
+  let sub;
+  if (kind === "hidden") {
+    const e = S.hidden[c.sessionId] || {};
+    sub = e.kind === "snooze" ? `Snoozed until ${untilText(e.until)}` : "Dismissed until it changes";
+    const place = metaText(c, ctx);
+    if (place) sub += ` · ${place}`;
+  } else {
+    sub = [c.needs || (c.state === "stuck" ? STUCK_NOTE : ""), metaText(c, ctx), `${waited}`].filter(Boolean).join(" · ");
+  }
+  const subEl = el("div", "row-sub", sub); subEl.title = sub;
+  mainCol.append(subEl);
+  r.append(mainCol);
+
+  const acts = el("div", "row-actions");
+  const busy = S.busy.has(c.sessionId);
+  if (kind === "hidden") {
+    const back = el("button", "btn btn-tertiary", "Show again");
+    back.type = "button"; back.dataset.focus = `restore:${c.sessionId}`; back.disabled = busy;
+    back.setAttribute("aria-label", `Show again: ${c.title}`);
+    back.addEventListener("click", () => restore(c));
+    acts.append(back);
+  } else {
+    const dismiss = el("button", "btn btn-tertiary", "Dismiss");
+    dismiss.type = "button"; dismiss.dataset.focus = `dismiss:${c.sessionId}`; dismiss.disabled = busy;
+    dismiss.title = "Hide until this session posts a new turn";
+    dismiss.setAttribute("aria-label", `Dismiss until it changes: ${c.title}`);
+    dismiss.addEventListener("click", () => hide(c, { kind: "dismiss", lastActivityAt: c.lastActivityAt || 0 }));
+    acts.append(dismiss);
+  }
+  const open = openLink(c, "btn-tertiary", "Open");
+  if (open) acts.append(open);
+  r.append(acts);
+  return r;
+}
+
+function fillRows(id, cards, ctx) {
+  document.getElementById(`${id}-n`).textContent = cards.length;
+  const box = document.getElementById(`${id}-box`);
+  box.hidden = !cards.length;
+  document.getElementById(id).replaceChildren(...cards.map(c => row(c, ctx, id)));
+}
+
+function showAllButton() {
+  const b = el("button", "btn btn-tertiary", "Show all projects");
+  b.type = "button"; b.dataset.focus = "show-all";
+  b.addEventListener("click", () => setView("all", { focus: true }));
+  return b;
+}
+
+function emptyState(v, elsewhere, filtered) {
+  const box = el("div", "empty");
+  box.append(svg("M3 8.5l3.5 3.5L13 4.5"));
+  const text = el("div");
+  const where = v.p ? ` in ${v.s === GENERAL ? projectName(v.p) + " (General)" : projectName(v.s || v.p)}` : "";
+  const p = projects().find(x => x.id === v.p);
+  const soon = p && p.comingSoon && !allCards().some(c => c.project === p.id);
+  text.append(el("strong", null, soon ? `No sessions in ${p.name} yet` : `Nothing needs you${where}`));
+  let detail;
+  if (soon) detail = "Sessions in folders mapped to this project in projects.json will show up here.";
+  else {
+    const bits = [];
+    if (filtered.quiet.length) bits.push(`${filtered.quiet.length} quieter`);
+    if (filtered.stale.length) bits.push(`${filtered.stale.length} stale`);
+    if (filtered.hidden.length) bits.push(`${filtered.hidden.length} hidden`);
+    detail = bits.length ? `${bits.join(", ")} below.` : "No questions, nothing blocked, nothing stuck.";
+  }
+  text.append(el("p", null, detail));
+  if (v.p && elsewhere > 0) {
+    text.append(el("p", null, `${elsewhere} ${elsewhere === 1 ? "needs" : "need"} you in other projects.`));
+    text.append(showAllButton());
+  }
+  box.append(text);
+  return box;
+}
+
+/* ---------- snooze menu ---------- */
+function closePop(returnFocus) {
+  if (!S.pop) return;
+  const { el: pop, button } = S.pop;
+  pop.remove(); button.setAttribute("aria-expanded", "false");
+  S.pop = null;
+  if (returnFocus) button.focus();
+}
+function togglePop(c, button, host) {
+  if (S.pop && S.pop.sid === c.sessionId) { closePop(true); return; }
+  closePop(false);
+  const pop = el("div", "pop");
+  pop.setAttribute("role", "menu"); pop.setAttribute("aria-label", "Snooze");
+  const hour = Date.now() + 3600_000, nine = nextNine();
+  const opts = [
+    { lbl: "Snooze 1 hour", det: `Back at ${clock(hour)}`, until: hour },
+    { lbl: new Date(nine).toDateString() === new Date().toDateString() ? "Snooze until 9:00" : "Snooze until tomorrow 9:00",
+      det: `Back ${untilText(nine)}`, until: nine },
+  ];
+  for (const o of opts) {
+    const b = el("button");
+    b.type = "button"; b.setAttribute("role", "menuitem");
+    b.append(el("span", "lbl", o.lbl), el("span", "det", o.det));
+    b.addEventListener("click", () => { closePop(false); hide(c, { kind: "snooze", until: o.until }); });
+    pop.append(b);
+  }
+  pop.addEventListener("keydown", (e) => {
+    const items = [...pop.querySelectorAll("button")], i = items.indexOf(document.activeElement);
+    if (e.key === "ArrowDown") { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+    else if (e.key === "Escape") { e.preventDefault(); closePop(true); }
+    else if (e.key === "Tab") closePop(false);
+  });
+  host.append(pop);
+  button.setAttribute("aria-expanded", "true");
+  S.pop = { sid: c.sessionId, el: pop, button };
+  pop.querySelector("button").focus();
+}
+document.addEventListener("click", (e) => { if (S.pop && !S.pop.el.contains(e.target)) closePop(false); });
+
+/* ---------- snooze / dismiss / restore ---------- */
+async function saveAction(body) {
+  if (SNAPSHOT) {
+    const now = Date.now();
+    if (body.action === "restore") delete S.hidden[body.sessionId];
+    else S.hidden[body.sessionId] = body.action === "snooze"
+      ? { kind: "snooze", until: body.until, at: now }
+      : { kind: "dismiss", lastActivityAt: body.lastActivityAt, at: now };
+    lsSet(LS_STATE, JSON.stringify(S.hidden));
+    return;
+  }
+  const r = await fetch("/state", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const state = await r.json();
+  S.hidden = state.hidden || {};
+}
+
+function focusAfterRemoval(sid) {
+  // Keep keyboard users in place: move to the next card's Open, else the section heading.
+  const nodes = [...document.querySelectorAll("[data-sid]")];
+  const i = nodes.findIndex(n => n.dataset.sid === sid);
+  return () => {
+    const after = nodes.slice(i + 1).map(n => document.querySelector(`[data-sid="${CSS.escape(n.dataset.sid)}"] .open`)).find(Boolean);
+    (after || document.getElementById("main-h")).focus?.();
+  };
+}
+
+async function hide(c, entry) {
+  const sid = c.sessionId, before = S.hidden[sid];
+  const hadFocus = document.activeElement && document.activeElement.closest && document.activeElement.closest(`[data-sid="${CSS.escape(sid)}"]`);
+  const refocus = hadFocus ? focusAfterRemoval(sid) : null;
+  S.hidden[sid] = { ...entry, at: Date.now() };  // optimistic: the card leaves at once
+  S.busy.add(sid);
+  render();
+  if (refocus) refocus();
+  const msg = entry.kind === "snooze" ? `Snoozed until ${untilText(entry.until)}: ${c.title}` : `Dismissed until it changes: ${c.title}`;
+  showToast(msg, () => restore(c));
+  try {
+    await saveAction(entry.kind === "snooze"
+      ? { action: "snooze", sessionId: sid, until: entry.until }
+      : { action: "dismiss", sessionId: sid, lastActivityAt: entry.lastActivityAt });
+  } catch (e) {
+    if (before) S.hidden[sid] = before; else delete S.hidden[sid];
+    showToast(`Couldn't save, the card is back (${e.message}).`, null);
+  } finally {
+    S.busy.delete(sid);
+    render();
+  }
+}
+
+async function restore(c) {
+  const sid = c.sessionId, before = S.hidden[sid];
+  delete S.hidden[sid];
+  S.busy.add(sid);
+  hideToast();
+  render();
+  try { await saveAction({ action: "restore", sessionId: sid }); }
+  catch (e) { if (before) S.hidden[sid] = before; showToast(`Couldn't save (${e.message}).`, null); }
+  finally { S.busy.delete(sid); render(); }
+}
+
+/* ---------- toast ---------- */
+function showToast(text, onUndo) {
+  const t = document.getElementById("toast"), undo = document.getElementById("toast-undo");
+  document.getElementById("toast-msg").textContent = text;
+  undo.hidden = !onUndo;
+  undo.onclick = onUndo ? () => { hideToast(); onUndo(); } : null;
+  t.hidden = false;
+  clearTimeout(S.toast);
+  S.toast = setTimeout(hideToast, TOAST_MS);
+}
+function hideToast() { clearTimeout(S.toast); document.getElementById("toast").hidden = true; }
+
+/* ---------- disclosure sections remember open/closed ---------- */
+(function initDetails() {
+  let saved = {};
+  try { saved = JSON.parse(lsGet(LS_OPEN) || "{}"); } catch { saved = {}; }
+  for (const d of document.querySelectorAll("details.sec")) {
+    const key = d.dataset.key;
+    if (key in saved) d.open = !!saved[key];
+    const word = d.querySelector(".toggle-word");
+    const sync = () => { word.textContent = d.open ? "Hide" : "Show"; };
+    sync();
+    d.addEventListener("toggle", () => { sync(); saved[key] = d.open; lsSet(LS_OPEN, JSON.stringify(saved)); });
+  }
+})();
+
+/* ---------- keyboard: 1-9 pick a project, arrows move along a menu row ---------- */
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { if (S.pop) closePop(true); else hideToast(); return; }
+  const t = e.target;
+  if (e.metaKey || e.ctrlKey || e.altKey || (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))) return;
+  if (/^[1-9]$/.test(e.key) && !S.pop) {
+    const btn = document.querySelectorAll("#tabs .tab")[Number(e.key) - 1];
+    if (btn) { e.preventDefault(); setView(btn.dataset.view, { focus: true }); }
+    return;
+  }
+  if ((e.key === "ArrowRight" || e.key === "ArrowLeft" || e.key === "Home" || e.key === "End") && t && t.closest) {
+    const rowEl = t.closest("#tabs, #subs");
+    if (!rowEl) return;
+    const btns = [...rowEl.querySelectorAll("button")], i = btns.indexOf(t);
+    const j = e.key === "Home" ? 0 : e.key === "End" ? btns.length - 1 : e.key === "ArrowRight" ? Math.min(btns.length - 1, i + 1) : Math.max(0, i - 1);
+    e.preventDefault(); btns[j].focus(); btns[j].scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
+});
+window.addEventListener("hashchange", () => { const k = readView(); if (k !== S.view) setView(k); });
+
+/* ---------- data ---------- */
+async function refresh() {
+  if (SNAPSHOT) { // the design snapshot defines this to render made-up data from disk
+    try { S.hidden = JSON.parse(lsGet(LS_STATE) || "{}") || {}; } catch { S.hidden = {}; }
+    S.status = window.__STATUS_SOURCE__();
+  } else {
+    try {
+      const [r, st] = await Promise.all([
+        fetch("/status.json", { cache: "no-store" }),
+        fetch("/state.json", { cache: "no-store" }).catch(() => null),
+      ]);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const status = await r.json();
+      if (st && st.ok) {
+        const state = await st.json();
+        // Keep optimistic entries for saves still in flight.
+        const inflight = Object.fromEntries([...S.busy].filter(id => S.hidden[id]).map(id => [id, S.hidden[id]]));
+        S.hidden = { ...(state.hidden || {}), ...inflight };
+      }
+      S.status = status;
+    } catch (e) {
+      S.status = { error: `The page can't load /status.json (${e.message}). Is server.py running?`, unreachable: true };
+    }
+  }
+  if (S.pop) return; // don't pull the menu out from under the pointer; the next tick renders
+  render();
+}
+
+refresh();
+setInterval(refresh, POLL_MS);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+</script>
+</body>
+</html>

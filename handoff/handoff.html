@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sessions needing attention: build handoff</title>
+<style>
+  @page { size: A4; }
+  :root { --ink: #1e1e1e; --ink-2: #555; --line: #dedcd6; --soft: #f5f4f0; --accent: #b4441f; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; color: var(--ink); font: 10pt/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
+  h1 { font-size: 24pt; line-height: 1.15; margin: 0 0 8pt; letter-spacing: -0.01em; }
+  h2 { font-size: 15pt; margin: 22pt 0 8pt; padding-top: 6pt; border-top: 1.5pt solid var(--ink); break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 14pt 0 5pt; break-after: avoid; }
+  p { margin: 0 0 7pt; }
+  ul, ol { margin: 0 0 8pt; padding-left: 16pt; }
+  li { margin: 0 0 3pt; }
+  code, pre { font-family: Menlo, "SF Mono", monospace; font-size: 8.3pt; }
+  code { background: var(--soft); padding: 0.5pt 3pt; border-radius: 3pt; }
+  pre { background: var(--soft); border: 0.75pt solid var(--line); border-radius: 5pt; padding: 7pt 9pt; margin: 0 0 9pt;
+        white-space: pre-wrap; break-inside: avoid; line-height: 1.4; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 0 0 10pt; font-size: 9pt; break-inside: auto; }
+  th, td { text-align: left; vertical-align: top; padding: 4pt 6pt; border-bottom: 0.75pt solid var(--line); }
+  th { font-weight: 650; background: var(--soft); }
+  tr { break-inside: avoid; }
+  .cover { min-height: 245mm; display: flex; flex-direction: column; justify-content: space-between; break-after: page; }
+  .kicker { text-transform: uppercase; letter-spacing: 0.08em; font-size: 8.5pt; color: var(--accent); font-weight: 700; margin: 30mm 0 6pt; }
+  .lede { font-size: 12.5pt; line-height: 1.45; color: var(--ink); max-width: 150mm; }
+  .meta { color: var(--ink-2); font-size: 9pt; }
+  .box { border: 0.75pt solid var(--line); border-left: 3pt solid var(--accent); border-radius: 4pt; padding: 7pt 10pt; margin: 0 0 10pt; break-inside: avoid; }
+  .box p:last-child, .box ul:last-child { margin-bottom: 0; }
+  .toc { columns: 2; column-gap: 12mm; font-size: 9.5pt; padding-left: 14pt; }
+  figure { margin: 0 0 12pt; break-inside: avoid; }
+  figure img { width: 100%; border: 0.75pt solid var(--line); border-radius: 4pt; display: block; }
+  figcaption { font-size: 8.5pt; color: var(--ink-2); margin-top: 3pt; }
+  .two { display: grid; grid-template-columns: 1.6fr 1fr; gap: 10pt; align-items: start; }
+  .page-break { break-before: page; }
+  .small { font-size: 8.8pt; color: var(--ink-2); }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div>
+    <div class="kicker">Build handoff</div>
+    <h1>Sessions needing attention</h1>
+    <p class="lede">A small local dashboard that shows which Claude desktop app (Code tab) sessions are waiting on
+      you, says what each one wants, and opens it in one click. This document has everything needed to build a
+      project like it from scratch: the facts it rests on, the rules, the architecture, the data contracts, the
+      security choices, the phases with their checks, and the pitfalls we hit.</p>
+  </div>
+  <div>
+    <figure><img src="build/screenshots/all-light.png" alt="The dashboard with made-up sessions">
+      <figcaption>The finished page (Phase 2), with made-up data. Project menu at the top; asked, stuck and blocked sessions first.</figcaption></figure>
+    <p class="meta">November 2026 · macOS · Python 3 standard library · one static HTML page · runs only on your Mac.<br>
+      All names, tickets and sessions in this document are made up.</p>
+  </div>
+</section>
+
+<h2>Contents</h2>
+<ol class="toc">
+  <li>Problem and goal</li>
+  <li>Where the app keeps session state</li>
+  <li>What counts as "needs attention"</li>
+  <li>Architecture</li>
+  <li>Data contracts</li>
+  <li>The scanner</li>
+  <li>Notifications</li>
+  <li>The server and its security</li>
+  <li>The page</li>
+  <li>Running at login</li>
+  <li>Design rules and the design handoff</li>
+  <li>Build phases and checks</li>
+  <li>Testing checklist</li>
+  <li>Pitfalls and lessons</li>
+  <li>Privacy and safety rules</li>
+  <li>Decision log</li>
+  <li>Appendix: screenshots</li>
+</ol>
+
+<h2>1. Problem and goal</h2>
+<p>When you run five to ten Claude Code sessions at once across several projects, some of them stop and wait for
+  you: they ask a question, need you to do something outside the app (make a test call, sign in to a connector),
+  or get stuck mid-turn. Finding them means clicking through the sidebar. Scheduled tasks make it worse: a task
+  that runs every 10 minutes creates hundreds of sessions, and they bury the few that matter.</p>
+<div class="box"><p><b>The job in one line:</b> in under 3 seconds, tell me <i>how many</i> sessions need me,
+  <i>which</i> ones and <i>what each one wants</i>, then get me into it with one click.</p></div>
+<ul>
+  <li><b>Audience:</b> one person, on their own Mac, glancing many times a day.</li>
+  <li><b>Scope:</b> local Code-tab sessions only. No cloud or SSH sessions, nothing hosted.</li>
+  <li><b>Read-only towards the app.</b> The tool never writes to the app's files. Its own state lives in its own folder.</li>
+</ul>
+
+<h2>2. Where the app keeps session state</h2>
+<p>Everything below was checked against the Claude desktop app's files on macOS in November 2026. The format is
+  <b>undocumented internal app state</b> and can change with any app update, so the tool must tolerate missing
+  fields and fail loudly (§6).</p>
+<ul>
+  <li><b>One JSON file per session:</b>
+    <code>~/Library/Application Support/Claude/claude-code-sessions/&lt;account&gt;/&lt;org&gt;/local_&lt;id&gt;.json</code>.
+    Scan every account/org pair, not only the first.</li>
+  <li><b>The app already decides who is waiting.</b> After every turn it writes a short summary with a status.
+    The one thing it doesn't save is the question in its next-step box: that is only in the CLI transcript
+    (below).</li>
+  <li><b>Opening a session:</b> <code>claude://claude.ai/epitaxy/local_&lt;id&gt;</code>. Tested: <code>open</code>
+    on that link switches the app to the right session within about 4 seconds. A browser asks "Open Claude?"
+    the first time.</li>
+</ul>
+<table>
+  <tr><th style="width:38%">Field</th><th>Meaning</th></tr>
+  <tr><td><code>postTurnSummary.status_category</code></td><td><code>blocked</code>, <code>review_ready</code>, <code>completed</code>, or missing</td></tr>
+  <tr><td><code>postTurnSummary.needs_action</code>, <code>status_detail</code></td><td>One line on what the session wants from you</td></tr>
+  <tr><td><code>turnWrapUp</code></td><td>Present once a turn has called the wrap-up tool. Today it holds only <code>description</code> (the recap); <code>needsUser</code>, the question, is no longer saved (§14)</td></tr>
+  <tr><td><code>cliSessionId</code> → <code>~/.claude/projects/*/&lt;cliSessionId&gt;.jsonl</code></td><td>The CLI transcript. The latest <code>type: "assistant"</code> entry calling <code>mcp__ccd_turn__wrap_up</code> has the question in <code>input.ask</code>. The strongest signal. A later <code>type: "user"</code> entry with typed text (not <code>isMeta</code>, not only tool results) means you answered. Read only the last 1 MB</td></tr>
+  <tr><td><code>lastActivityAt</code>, <code>lastFocusedAt</code></td><td>Epoch ms. Activity newer than your last focus means unread</td></tr>
+  <tr><td><code>lastTurnEdgeAt</code>, <code>latestUserFrameAt</code></td><td>When the latest turn <b>started</b> (see the pitfall in §14). Missing on older sessions</td></tr>
+  <tr><td><code>isArchived</code>, <code>scheduledTaskId</code>, <code>title</code>, <code>cwd</code>, <code>sessionId</code></td><td>Filtering, grouping and display</td></tr>
+</table>
+<p><b>Not on disk:</b> pending permission prompts. The app keeps them in memory only, so §3 uses a "possibly
+  stuck" approximation.</p>
+
+<h2>3. What counts as "needs attention"</h2>
+<table>
+  <tr><th style="width:24%">Group</th><th>Rule</th></tr>
+  <tr><td><b>Needs you</b> (main list)</td><td>Not archived, not a scheduled-task run, and one of: <b>asked</b> (the turn's wrap-up has an unanswered <code>ask</code>) · <b>blocked</b> (<code>status_category = blocked</code>) · <b>stuck</b> (below)</td></tr>
+  <tr><td><b>Stuck</b></td><td>A turn has started but not finished: <code>lastTurnEdgeAt</code> is present, there's no <code>postTurnSummary</code> and no <code>turnWrapUp</code>, and nothing has happened for 5 minutes. The note says it "may be a permission prompt or a slow tool"</td></tr>
+  <tr><td><b>Stale</b> (collapsed)</td><td>Asked, blocked or stuck with no activity for more than 7 days: "archive or revive?"</td></tr>
+  <tr><td><b>Quieter</b></td><td><code>review_ready</code>, or finished and unread (<code>lastActivityAt &gt; lastFocusedAt</code>)</td></tr>
+  <tr><td><b>Scheduled tasks</b></td><td>One line per <code>scheduledTaskId</code>, using only its latest run, shown only when that run is asked, blocked or stuck</td></tr>
+  <tr><td><b>Hidden</b></td><td>Snoozed (until a time) or dismissed (until the session has new activity). Local to the tool</td></tr>
+</table>
+<p><b>Urgency order:</b> asked &gt; stuck &gt; blocked &gt; review &gt; unread, newest first within each.
+  <b>Opening a session doesn't clear it.</b> A blocked session usually waits on something you do outside the app, so
+  it stays until its status changes or you snooze or dismiss it.</p>
+<p><b>Calibrate with the user.</b> In the reference build, the raw data said 216 sessions were "blocked". Removing
+  scheduled-task runs, moving old ones to Stale, and fixing the stuck rule brought the main list to 4, which matched
+  the user's own count exactly. Do this calibration in Phase 0, before building any UI.</p>
+
+<h2>4. Architecture</h2>
+<pre><code>~/Library/Application Support/Claude/claude-code-sessions/**/local_*.json      (read-only)
+                              │
+         scanner.py   (launchd, every 10 s)  ──► macOS notification (new "asked" only)
+         reads projects.json + state.json
+                              ▼
+                         status.json
+              ┌───────────────┼──────────────────┐
+              ▼               ▼                  ▼
+   A: server.py + page   B: menu-bar app     C: in-app pane
+   127.0.0.1:8790        (Swift, planned)    (Claude mod, planned)
+   POST /state ──► state.json  (Snooze / Dismiss)</code></pre>
+<ul>
+  <li><b>One scanner, one notifier.</b> Every display only reads <code>status.json</code>. This avoids N copies
+    scanning and N duplicate notifications (an in-app pane runs separately in every session).</li>
+  <li><b>One writer of user state.</b> Only the browser page writes <code>state.json</code>, through the server.
+    The scanner only reads it.</li>
+  <li><b>Python 3 standard library only.</b> Nothing to install, and the page is one static file with no build step.</li>
+</ul>
+<pre><code>project/
+  scanner.py      reads sessions, writes status.json, sends notifications
+  server.py       serves the page + JSON on 127.0.0.1:8790, POST /state
+  index.html      the whole UI: inline CSS + plain JavaScript
+  projects.json   project menu + folder → project rules
+  install.sh      writes and loads two launchd agents
+  uninstall.sh    removes them
+  .gitignore      status.json, state.json, logs/  (they hold real session titles)
+  design/         design handoff: made-up fixture, snapshot page, screenshot scripts</code></pre>
+
+<h2>5. Data contracts</h2>
+<h3>status.json (written by the scanner)</h3>
+<pre><code>{ "schema": 1, "generatedAt": 1794494000000, "error": null,
+  "projects": [ { "id": "client-a", "name": "Client A",
+                  "children": [ { "id": "client-a/us", "name": "Client A US" } ] },
+                { "id": "client-b", "name": "Client B", "comingSoon": true, "children": [] } ],
+  "main": [card], "scheduled": [card], "stale": [card], "quiet": [card],
+  "hidden": [card + { "section": "main", "hiddenBy": {…} }],
+  "counts": { "main": 7, "asked": 3, "stale": 4, "quiet": 6, "hidden": 0, "scanned": 361 } }
+
+card = {
+  "sessionId": "local_…",
+  "title": "…",
+  "state": "asked | stuck | blocked | review_ready | unread",
+  "project": "client-a",
+  "subproject": "client-a/us",          // or null
+  "repo": "client-a-bot (worktree)",
+  "needs": "…",                         // may be ""
+  "lastActivityAt": 1794493000000,
+  "waitingMs": 1500000,
+  "link": "claude://claude.ai/epitaxy/local_…" }</code></pre>
+<p>When <code>error</code> is set, the lists are empty and the page shows a red banner. It never shows a silent 0.</p>
+<h3>projects.json (edited by hand)</h3>
+<pre><code>{ "projects": [ …the menu, in order… ],
+  "default": "other",
+  "rules": [
+    { "folder": "~/work/client-a-bot",        "project": "client-a", "subproject": "client-a/us" },
+    { "folder": "~/work/client-a-bot-canada", "project": "client-a", "subproject": "client-a/canada" },
+    { "folder": "~/work/internal-tools",      "project": "tools",    "subproject": null } ] }</code></pre>
+<ul>
+  <li>A session's folder is its <code>cwd</code> with any <code>/.claude/worktrees/…</code> cut off, so worktrees
+    inherit their repo's project.</li>
+  <li>The longest matching rule wins, and a rule also matches its subfolders. <code>~/work/tools-old</code> must not
+    match <code>~/work/tools</code>, so compare with <code>folder + "/"</code>.</li>
+  <li>No match goes to the default project.</li>
+  <li>The file is validated on every scan. If it's missing, isn't valid JSON, names an unknown project, or puts a
+    sub-project under the wrong parent, the page shows the red banner with the reason.</li>
+</ul>
+<h3>state.json (written only by the server)</h3>
+<pre><code>{ "version": 1, "hidden": {
+    "local_abc": { "kind": "snooze",  "until": 1794500000000, "at": 1794496400000 },
+    "local_def": { "kind": "dismiss", "lastActivityAt": 1794490000000, "at": 1794496400000 } } }</code></pre>
+<p><b>Snooze</b> hides a card until <code>until</code>. <b>Dismiss</b> hides it while the session's
+  <code>lastActivityAt</code> is no newer than the value stored at dismiss time, so any new turn brings it back.
+  The scanner and the page use the same rule. A missing or broken <code>state.json</code> hides nothing; the worst
+  case is a card you hid comes back.</p>
+
+<h2>6. The scanner</h2>
+<ol>
+  <li>Validate <code>projects.json</code>. If it's bad, write an error status and stop.</li>
+  <li>Glob <code>*/*/local_*.json</code> and parse each file. Files missing <code>sessionId</code>, <code>title</code>
+    or <code>lastActivityAt</code> count as problems.</li>
+  <li><b>Fail loudly:</b> if there are no files, more than 10% are unreadable, or no file has any status field, write
+    <code>error</code> and stop.</li>
+  <li>Skip archived sessions. Keep only the latest run of each scheduled task.</li>
+  <li>Classify each session (below) and build cards with project and sub-project.</li>
+  <li>Sort cards into main, stale or quiet. Move snoozed and dismissed cards to <code>hidden</code>.</li>
+  <li>Write <code>status.json</code> <b>atomically</b> (temp file in the same folder, then <code>os.replace</code>),
+    so readers never see half a file.</li>
+  <li>Compare with the previous <code>status.json</code> and notify about new questions (§7).</li>
+</ol>
+<pre><code>def classify(s, now):
+    summary = s.get("postTurnSummary") or {}
+    wrap = s.get("turnWrapUp") or {}
+    # A turn is in progress: lastTurnEdgeAt marks its START, and the app clears the summary
+    # and wrap-up then. Older sessions have no lastTurnEdgeAt; never call those stuck.
+    if "lastTurnEdgeAt" in s and not summary and not wrap:
+        return "stuck" if now - s["lastActivityAt"] &gt; 5 * 60_000 else None   # else: still working
+    ask = wrap and transcript_ask(s["cliSessionId"])    # latest wrap-up's input.ask, "" once answered
+    if wrap.get("needsUser") or ask:                       return "asked"
+    if summary.get("status_category") == "blocked":        return "blocked"
+    if summary.get("status_category") == "review_ready":   return "review_ready"
+    if s.get("lastActivityAt", 0) &gt; s.get("lastFocusedAt", 0): return "unread"
+    return None
+
+needs = wrap.needsUser or ask or summary.needs_action or summary.status_detail or wrap.description or ""</code></pre>
+<p><b>CLI:</b> <code>python3 scanner.py --print</code> prints the grouped list (your Phase 0 tool).
+  <code>--no-notify</code> skips notifications.</p>
+
+<h2>7. Notifications</h2>
+<ul>
+  <li><b>Only for a new question.</b> Blocked, stuck and stale sessions never notify; a blocked session can sit for
+    days, and notifications every 10 minutes teach you to ignore them.</li>
+  <li><b>"New"</b> means a <code>(sessionId, question)</code> pair that wasn't in the previous
+    <code>status.json</code>, so a new question in the same session counts. Hidden cards count as already seen, so
+    a snooze ending doesn't notify.</li>
+  <li><b>No baseline, no noise.</b> With no previous file, or a previous error, send nothing rather than announcing
+    every open question at once.</li>
+  <li><b>Titles only.</b> Question text can contain phone numbers or customer details, and banners show on the lock
+    screen.</li>
+  <li><b>How:</b> <code>osascript</code>, with the text passed as <code>argv</code> (<code>on run argv … display
+    notification (item 1 of argv) …</code>), never interpolated into the script.</li>
+  <li><b>Known wart:</b> clicking an <code>osascript</code> notification opens Script Editor. A native menu-bar app
+    can post its own notifications instead.</li>
+</ul>
+
+<h2>8. The server and its security</h2>
+<p>A stdlib <code>ThreadingHTTPServer</code>. Routes: <code>GET /</code> (the page), <code>/status.json</code>,
+  <code>/state.json</code>, <code>/health</code>, and <code>POST /state</code>, plus a fixed list of the installed
+  app's files from <code>pwa/</code> (manifest, service worker, icons; added 2026-11-12). It's small, but it serves real
+  session titles and accepts writes, so:</p>
+<table>
+  <tr><th style="width:30%">Guard</th><th>Why</th></tr>
+  <tr><td>Bind to <code>127.0.0.1</code> only</td><td>Nothing on the network can reach it</td></tr>
+  <tr><td><code>Host</code> must be <code>127.0.0.1:8790</code> or <code>localhost:8790</code>, otherwise 403</td><td>Stops DNS rebinding: a web page can't read <code>status.json</code> through a hostname that resolves to 127.0.0.1</td></tr>
+  <tr><td>POST requires <code>Origin</code> to be the page's own origin</td><td>A cross-site page can't forge <code>Origin</code></td></tr>
+  <tr><td>POST requires <code>Content-Type: application/json</code></td><td>Forces a CORS preflight, which the server never answers, so simple cross-site form posts fail</td></tr>
+  <tr><td>Body of 2 KB or less; strict validation</td><td>The <code>sessionId</code> must match <code>^local_[A-Za-z0-9_-]{1,80}$</code>; a snooze <code>until</code> must be in the next 8 days; the action must be snooze, dismiss or restore</td></tr>
+  <tr><td>Lock plus atomic write; prune old entries</td><td>No torn files. Ended snoozes and dismissals older than 90 days are dropped, with at most 1,000 entries</td></tr>
+  <tr><td><code>Cache-Control: no-store</code>, <code>nosniff</code>, <code>no-referrer</code></td><td>Fresh data, no content sniffing, no leaking URLs</td></tr>
+</table>
+<p>Quiet logs: skip routine 2xx lines, because the page polls every 5 s. If <code>status.json</code> doesn't exist
+  yet, serve an error object so the page can explain.</p>
+<p><b>Installed app (PWA).</b> The page can be installed from Chrome or Safari (Add to Dock). Its service worker
+  caches only the page shell (<code>/</code>, which holds no session data), network first, so the window still
+  opens while the server is down and shows the red "Can't reach" banner. It never caches <code>/status.json</code>
+  or <code>/state.json</code>. The Dock badge shows the same count as the tab title, and a dot for "(!)". The CSP
+  adds <code>manifest-src 'self'</code> and <code>worker-src 'self'</code>.</p>
+
+<h2>9. The page</h2>
+<div class="two">
+  <div>
+    <ul>
+      <li><b>Sections:</b> Needs you (scheduled tasks included), Stale (collapsed), Quieter, and Hidden (snoozed or
+        dismissed, with a <b>Show again</b> button).</li>
+      <li><b>Card:</b> status chip, title, project or folder, "waiting 25m", the one-line "needs" text (up to two
+        lines), and <b>Open session</b> (the <code>claude://</code> link). Only the first card's Open is a filled
+        primary; the rest are outlined, so there's one primary per screen. Snooze and Dismiss are text buttons.</li>
+      <li><b>Project menu:</b> All, then each project with its count of Needs-you items and how many of those asked.
+        Coming-soon projects are visible but quiet.</li>
+      <li><b>Sub-projects:</b> a second row appears with the parent selected. Its labels are short ("US", "Canada"),
+        and "General" holds the parent's sessions that have no sub-project.</li>
+      <li><b>A filter applies to every section.</b> The tab title always shows the total across all projects, and the
+        page says "3 more need you in other projects" with a "Show all projects" button.</li>
+      <li><b>The view is remembered</b> in the URL hash and in <code>localStorage</code> (wrapped in try/catch). Arrow,
+        Home and End keys move through the menu.</li>
+    </ul>
+  </div>
+  <figure><img src="build/screenshots/mobile-light.png" alt="Phone width">
+    <figcaption>375 px: the menu becomes a scrollable row.</figcaption></figure>
+</div>
+<ul>
+  <li><b>Snooze</b> opens a small menu with "Snooze 1 hour (back at 15:42)" and "Snooze until tomorrow 9:00".
+    <b>Dismiss</b> means "until it changes". Both show an <b>Undo</b> toast for 8 s, and focus moves to the next card.</li>
+  <li><b>Refresh:</b> poll every 5 s (<code>pageRefreshSeconds</code> in <code>config.json</code>, served by <code>GET /config.json</code>) and when the tab becomes visible again. If <code>generatedAt</code> is more
+    than 3 minutes old, the header turns red: "Scanner hasn't run for 9m".</li>
+  <li><b>Safety:</b> set all session text with <code>textContent</code>, never <code>innerHTML</code>, because titles
+    are data. Only render <code>claude://</code> links.</li>
+  <li><b>Snapshot hook:</b> if <code>window.__STATUS_SOURCE__</code> is a function, the page renders its data instead
+    of fetching. The design snapshot (§11) uses this to run from disk with made-up data.</li>
+</ul>
+
+<h2>10. Running at login</h2>
+<p><code>install.sh</code> writes two LaunchAgents into <code>~/Library/LaunchAgents</code> and loads them with
+  <code>launchctl bootstrap gui/$(id -u)</code>. It's safe to run again (it boots out first).</p>
+<pre><code>local.sessions-attention.scanner   ProgramArguments: python3 -I scanner.py
+                                   StartInterval 10 (scanEverySeconds in config.json), RunAtLoad
+local.sessions-attention.server    ProgramArguments: python3 -I server.py
+                                   KeepAlive, RunAtLoad
+both: WorkingDirectory = project folder, stdout/stderr → logs/&lt;name&gt;.log, plutil -lint before loading</code></pre>
+<p><code>uninstall.sh</code> boots both out and deletes the plists. Use an absolute <code>python3</code> path (from
+  <code>command -v python3</code> at install time), because launchd has a minimal <code>PATH</code>. Choose a free
+  port first; the reference build found 8769 in use and took 8790.</p>
+
+<h2>11. Design rules and the design handoff</h2>
+<p>The page was redesigned through a design handoff before Phase 2. Rules applied (from the "design tips" posts on
+  digitalzoomstudio.net):</p>
+<ul>
+  <li><b>Spacing and text:</b>
+    <ul>
+      <li>An 8 pt spacing grid with even padding.</li>
+      <li>Body line height 1.4–1.6, left-aligned.</li>
+      <li>Near-black text (about <code>#1E1E1E</code>).</li>
+      <li>Clear type steps and 45–75 character lines.</li>
+    </ul></li>
+  <li><b>Contrast:</b> 4.5:1 for body text and 3:1 for large text, in both themes. Check the chips (coloured text
+    on a tint) and the muted meta text, and avoid grey text on coloured backgrounds.</li>
+  <li><b>Buttons:</b>
+    <ul>
+      <li>One filled primary per screen, an outlined secondary, and a text-only tertiary.</li>
+      <li>Verb-plus-object labels ("Open session", "Snooze 1 hour").</li>
+      <li>Five states: default, hover, pressed, disabled and loading.</li>
+      <li>Tap targets of 44–48 px.</li>
+    </ul></li>
+  <li><b>Colour:</b> two base colours and one accent. Use the accent on the main action plus at most one other
+    element. Status colours are semantic, and red is reserved for errors.</li>
+  <li><b>No "AI look":</b> no nested cards, no purple-to-blue gradients, no emoji labels, no uneven spacing.</li>
+</ul>
+<p><b>The first version broke two of these rules,</b> which is why it was redesigned: every card had a filled black
+  Open button (14 primaries on one screen), and the buttons were 36 px tall.</p>
+<p><b>How the design handoff was packaged</b> (reuse it):</p>
+<ul>
+  <li><code>make_handoff.py</code> writes a <b>made-up</b> <code>status-fixture.json</code>. Its times are relative
+    (<code>*AgoMs</code>) and rebased on load, so the page never looks out of date.</li>
+  <li>It builds a snapshot page by injecting the fixture through the <code>__STATUS_SOURCE__</code> hook, so it opens
+    from disk. <code>?state=normal|empty|late|error</code> shows each page state.</li>
+  <li><code>shoot.py</code> (Playwright) takes light and dark screenshots of the snapshot: desktop, phone, empty,
+    scanner-late and error.</li>
+  <li><code>DESIGN-HANDOFF.md</code> covers the purpose, today's page, hard constraints, the rules, the asks, the data
+    contract, real text lengths and what to send back. It's zipped for upload.</li>
+  <li><b>Never screenshot the live page:</b> it shows real titles.</li>
+</ul>
+
+<h2>12. Build phases and checks</h2>
+<p>Each phase ends with the user's check before the next one starts.</p>
+<table>
+  <tr><th style="width:23%">Phase</th><th>Build</th><th style="width:30%">Done when</th></tr>
+  <tr><td><b>0. Scanner</b> (read-only)</td><td><code>scanner.py --print</code>, <code>.gitignore</code> first. Check that the <code>claude://</code> link opens the right session (watch the target's <code>lastFocusedAt</code> change, then switch back). Test the error paths: an empty folder and unreadable files</td><td>The printed list matches the user's own count</td></tr>
+  <tr><td><b>1. Browser page</b></td><td><code>server.py</code>, <code>index.html</code>, notifications, <code>install.sh</code> / <code>uninstall.sh</code></td><td>It runs from launchd; the count matches the app; a test notification appears</td></tr>
+  <tr><td><b>2. Projects, Snooze, Dismiss</b></td><td>Design handoff first. Then <code>projects.json</code> in the scanner, the new page, <code>POST /state</code> and <code>state.json</code></td><td>Each project's list matches the app; Snooze and Dismiss survive a restart</td></tr>
+  <tr><td><b>3. Menu-bar count</b> (planned)</td><td>A native Swift <code>NSStatusItem</code> app built with <code>swiftc</code>: "⚠ N", one row per session that opens it, "Open dashboard". Read-only. Can post its own notifications</td><td>The count matches the page; clicking a row opens the session</td></tr>
+  <tr><td><b>4. In-app pane</b> (planned)</td><td>A Claude Code "mod" that reads <code>status.json</code> on a timer and draws a list beside the chat. It never scans or notifies</td><td>The pane shows the same list as the page in any session</td></tr>
+</table>
+<div class="box"><p><b>About the in-app pane (mods), as researched:</b></p>
+  <ul>
+    <li><b>Can:</b> read local files, refresh on a timer, and draw a pane, band, toast or notification.</li>
+    <li><b>Runs separately in every session.</b> Keep scanning and notifying out of it.</li>
+    <li><b>Opening another session isn't documented.</b> The app renders only <code>https:</code> links as
+      clickable, so a <code>claude://</code> link won't work. Check before promising Open buttons; otherwise ship a
+      read-only list.</li>
+    <li><b>The API is early access</b> and changes between releases.</li>
+  </ul></div>
+
+<h2>13. Testing checklist</h2>
+<ul>
+  <li><b>Classification:</b> the printed list matches the user's count; no long-finished session shows as stuck; a
+    session running right now isn't stuck.</li>
+  <li><b>Loud failures:</b> an empty sessions folder, unreadable files, and every <code>projects.json</code> error
+    (missing, bad JSON, unknown project, sub-project under the wrong parent) each give a banner.</li>
+  <li><b>Folder matching:</b> subfolders, worktrees, a look-alike prefix (<code>tools-old</code>), and the default
+    project.</li>
+  <li><b>Notifications:</b> new question, unchanged list, no baseline, a changed question in the same session, and a
+    snooze ending (silent).</li>
+  <li><b>Server:</b> 403 for a foreign <code>Host</code>; 403 for a POST without a matching <code>Origin</code>; 415
+    for a non-JSON body; 400 for a bad <code>sessionId</code> or an <code>until</code> out of range; a POST that
+    round-trips into <code>state.json</code>.</li>
+  <li><b>Page:</b> light and dark, 375 px and a half-screen 800 px, no console errors, keyboard through the menu, the
+    Undo toast, Show again from Hidden, and the scanner-late and error states.</li>
+  <li><b>launchd:</b> both agents listed in <code>launchctl list</code>, a fresh <code>status.json</code> from the
+    agent, and the server listening on 127.0.0.1 only (<code>lsof -iTCP:8790</code>). Ideally, check again after a
+    real logout and login.</li>
+</ul>
+
+<h2>14. Pitfalls and lessons</h2>
+<ul>
+  <li><b>The question moved out of the session file.</b> <code>turnWrapUp.needsUser</code> stopped being saved
+    (none of 18 wrap-ups had it), so "asked" silently never fired: a session waiting on a yes/no showed nowhere,
+    because the app's own summary called it <code>completed</code> and you had already looked at it. Read the
+    question from the transcript, and check field names against real files whenever a state's count sits at 0.</li>
+  <li><b><code>lastTurnEdgeAt</code> marks a turn's start, not its end.</b> The first stuck rule
+    (<code>latestUserFrameAt &gt; lastTurnEdgeAt</code>) flagged 32 long-finished sessions, because older sessions
+    don't have the field at all. The reliable signal is "edge present, and no summary or wrap-up yet".</li>
+  <li><b>Scheduled tasks flood the data.</b> One task every 10 minutes made 250 sessions. Collapse them to the latest
+    run per task. That surfaced a real problem: the task had been failing for hours because its connector was
+    signed out.</li>
+  <li><b>"Blocked" isn't "urgent".</b> Most blocked sessions were 3–6 weeks old and abandoned. The 7-day Stale
+    section is what made the count match reality.</li>
+  <li><b>Never show a silent 0.</b> A wrong "0 waiting" is worse than no number. Detect format drift (missing fields,
+    unreadable files, a stale <code>generatedAt</code>) and say so.</li>
+  <li><b>A filter must not hide work.</b> Keep the global total in the tab title and say how many need you
+    elsewhere.</li>
+  <li><b>Calibrate before you build UI.</b> A 30-minute read-only scan and a comparison with the user's own count
+    saved a wrong design.</li>
+  <li><b>Check facts, don't ask.</b> Test the deep link, the free port, the installed tools (<code>swiftc</code>,
+    Python version) and the mod capabilities before putting choices to the user.</li>
+</ul>
+
+<h2>15. Privacy and safety rules</h2>
+<ul>
+  <li><b>It stays on the Mac:</b> no hosting, no deploy, no outside service.</li>
+  <li><b>Gitignore generated files from the first commit.</b> <code>status.json</code>, <code>state.json</code> and
+    <code>logs/</code> hold real session titles, which can include customer or ticket details.</li>
+  <li><b>Design work uses made-up data only.</b> Check fixtures for phone numbers and real ticket keys before sending
+    them anywhere.</li>
+  <li><b>The tool never changes the app.</b> No archive button; archiving stays in the app.</li>
+  <li><b>Notifications show titles only.</b> Text goes to <code>osascript</code> as <code>argv</code>.</li>
+  <li><b>The page sets text with <code>textContent</code> only.</b> The server checks <code>Host</code> and
+    <code>Origin</code> and validates every write.</li>
+</ul>
+
+<h2>16. Decision log</h2>
+<table>
+  <tr><th style="width:5%">#</th><th>Decision</th></tr>
+  <tr><td>1</td><td>The main list is asked, blocked or stuck. Review-ready and unread go in a quieter section</td></tr>
+  <tr><td>2</td><td>Anything blocked or stuck for more than 7 days goes in a collapsed "Stale: archive or revive?" section</td></tr>
+  <tr><td>3</td><td>"Possibly stuck" means a turn started but didn't finish, with 5 minutes of quiet. It's in the main list</td></tr>
+  <tr><td>4</td><td>Opening a session doesn't clear it. Snooze (1 h / until tomorrow 9:00) and Dismiss-until-it-changes, both stored locally</td></tr>
+  <tr><td>5</td><td>Scheduled tasks show as one line per task, latest run only, and only when that run needs you</td></tr>
+  <tr><td>6</td><td>Local sessions only, every account/org folder</td></tr>
+  <tr><td>7</td><td>Card: chip, title, project or folder, time waiting, "needs" line, Open. No transcript preview</td></tr>
+  <tr><td>8</td><td>A count is always visible. Notify only on a new question, with the title only</td></tr>
+  <tr><td>9</td><td>Python standard library only; one static HTML page</td></tr>
+  <tr><td>10</td><td>One scanner writes <code>status.json</code>. All displays only read it</td></tr>
+  <tr><td>11</td><td>Displays: browser page (built), Swift menu bar (planned), in-app pane (planned, read-only)</td></tr>
+  <tr><td>12</td><td>Server on 127.0.0.1:8790 only. Start at login with launchd; <code>uninstall.sh</code> removes it all</td></tr>
+  <tr><td>13</td><td>Snooze and Dismiss only in the browser page, the single writer</td></tr>
+  <tr><td>14</td><td>No archive button. The tool never changes anything in the app</td></tr>
+  <tr><td>15</td><td>A red banner instead of a count when the format looks changed or <code>projects.json</code> is broken</td></tr>
+  <tr><td>16</td><td>The project menu with sub-projects is driven by <code>projects.json</code>. Folder rules, longest match wins</td></tr>
+  <tr><td>17</td><td>Design first through a handoff with made-up data, then build</td></tr>
+  <tr><td>18</td><td>No git commands from the assistant. A <code>.gitignore</code> exists from the first file</td></tr>
+</table>
+
+<h2 class="page-break">17. Appendix: screenshots</h2>
+<p class="small">All from the snapshot page with made-up data.</p>
+<figure><img src="build/screenshots/all-dark.png" alt="Dark theme"><figcaption>All projects, dark theme.</figcaption></figure>
+<figure><img src="build/screenshots/subproject-light.png" alt="Sub-project selected"><figcaption>A sub-project selected (Client A → Canada): the second menu row, a filtered list, and "more need you in other projects".</figcaption></figure>
+<figure><img src="build/screenshots/snooze-light.png" alt="Snooze menu"><figcaption>The Snooze menu on a card.</figcaption></figure>
+
+</body>
+</html>
