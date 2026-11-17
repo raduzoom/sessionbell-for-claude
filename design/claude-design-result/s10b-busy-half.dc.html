@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Busy, 12 asked, 800, light and dark</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="sn.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1680px; height: 1200px; display: flex; gap: 80px">
+  <dc-import name="Main" theme="light" layout="half" fixture="busy" h="1200" hint-size="800px,1200px"></dc-import>
+  <dc-import name="Main" theme="dark" layout="half" fixture="busy" h="1200" hint-size="800px,1200px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1680,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

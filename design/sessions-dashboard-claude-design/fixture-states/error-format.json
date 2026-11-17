@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "error": "Can't read session status, format may have changed (361 of 361 files unreadable).",
+  "generatedAgoMs": 20000,
+  "projects": [
+    {
+      "id": "client-a",
+      "name": "Client A",
+      "children": [
+        {
+          "id": "client-a/us",
+          "name": "Client A US"
+        },
+        {
+          "id": "client-a/canada",
+          "name": "Client A Canada"
+        }
+      ]
+    },
+    {
+      "id": "client-b",
+      "name": "Client B",
+      "comingSoon": true,
+      "children": []
+    },
+    {
+      "id": "client-c",
+      "name": "Client C",
+      "comingSoon": true,
+      "children": []
+    },
+    {
+      "id": "tools",
+      "name": "Internal Tools",
+      "children": []
+    },
+    {
+      "id": "kb",
+      "name": "Knowledge Base",
+      "children": []
+    },
+    {
+      "id": "other",
+      "name": "Other",
+      "children": []
+    }
+  ],
+  "main": [],
+  "scheduled": [],
+  "stale": [],
+  "quiet": [],
+  "hidden": [],
+  "counts": {
+    "main": 0,
+    "asked": 0,
+    "stale": 0,
+    "quiet": 0,
+    "hidden": 0,
+    "scanned": 120
+  }
+}

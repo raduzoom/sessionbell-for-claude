@@ -1,0 +1,256 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-12T12:00:00Z"
+  },
+  "title": "Sessions needing attention",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 880,
+      "title": "Prototype · desktop (click, arrows, Snooze, theme)",
+      "is_interactive": true
+    },
+    "s01-desktop.dc.html": {
+      "x": 1360,
+      "y": 0,
+      "w": 2640,
+      "h": 880,
+      "title": "1 · Main view · 1280 · light / dark"
+    },
+    "s01-half.dc.html": {
+      "x": 0,
+      "y": 1300,
+      "w": 1680,
+      "h": 880,
+      "title": "1 · Main view · 800 · light / dark (playable)",
+      "is_interactive": true
+    },
+    "s01-phone.dc.html": {
+      "x": 1760,
+      "y": 1300,
+      "w": 830,
+      "h": 812,
+      "title": "1 · Main view · 375 · light / dark (playable)",
+      "is_interactive": true
+    },
+    "s03-phone-session.dc.html": {
+      "x": 2670,
+      "y": 1300,
+      "w": 830,
+      "h": 812,
+      "title": "3 · Phone session view · light / dark"
+    },
+    "s03b-half-session.dc.html": {
+      "x": 3580,
+      "y": 1300,
+      "w": 1680,
+      "h": 880,
+      "title": "3b · 800 · session slides over · light / dark"
+    },
+    "s12-half-row-menu.dc.html": {
+      "x": 5340,
+      "y": 1300,
+      "w": 1680,
+      "h": 880,
+      "title": "12 · 800 · row More actions menu open · light / dark"
+    },
+    "s02-subproject.dc.html": {
+      "x": 0,
+      "y": 2600,
+      "w": 2640,
+      "h": 880,
+      "title": "2 · Client A → Canada · 1280 · light / dark"
+    },
+    "s04-snooze.dc.html": {
+      "x": 2720,
+      "y": 2600,
+      "w": 2640,
+      "h": 880,
+      "title": "4 · Snooze menu open · light / dark"
+    },
+    "s02b-subproject-half.dc.html": {
+      "x": 5440,
+      "y": 2600,
+      "w": 1680,
+      "h": 880,
+      "title": "2 · Client A → Canada · 800 · light / dark"
+    },
+    "s05-toast.dc.html": {
+      "x": 0,
+      "y": 3600,
+      "w": 2640,
+      "h": 880,
+      "title": "5 · Undo toast · light / dark"
+    },
+    "s06-stale-hidden.dc.html": {
+      "x": 2720,
+      "y": 3600,
+      "w": 2640,
+      "h": 1440,
+      "title": "6 · Stale and Hidden expanded · light / dark"
+    },
+    "s07-empty.dc.html": {
+      "x": 0,
+      "y": 5440,
+      "w": 2640,
+      "h": 880,
+      "title": "7 · Empty · light / dark"
+    },
+    "s08-late.dc.html": {
+      "x": 2720,
+      "y": 5440,
+      "w": 2640,
+      "h": 880,
+      "title": "8 · Scanner late · light / dark"
+    },
+    "s09-error-format.dc.html": {
+      "x": 0,
+      "y": 6440,
+      "w": 2640,
+      "h": 880,
+      "title": "9a · Error: format changed · light / dark"
+    },
+    "s09-error-projects.dc.html": {
+      "x": 2720,
+      "y": 6440,
+      "w": 2640,
+      "h": 880,
+      "title": "9b · Error: projects.json · light / dark"
+    },
+    "s10-busy.dc.html": {
+      "x": 0,
+      "y": 7720,
+      "w": 2640,
+      "h": 1200,
+      "title": "10 · Busy: 12 asked, long titles · 1280 · light / dark"
+    },
+    "s11-solid.dc.html": {
+      "x": 2720,
+      "y": 7720,
+      "w": 2640,
+      "h": 880,
+      "title": "11 · Solid (reduced transparency) · light / dark"
+    },
+    "s10b-busy-half.dc.html": {
+      "x": 5440,
+      "y": 7720,
+      "w": 1680,
+      "h": 1200,
+      "title": "10 · Busy: 12 asked, long titles · 800 · light / dark"
+    },
+    "tokens.dc.html": {
+      "x": 0,
+      "y": 9320,
+      "w": 1280,
+      "h": 1800,
+      "title": "Tokens · light and dark"
+    },
+    "components.dc.html": {
+      "x": 1360,
+      "y": 9320,
+      "w": 1440,
+      "h": 3300,
+      "title": "Components · every state"
+    },
+    "contrast.dc.html": {
+      "x": 2880,
+      "y": 9320,
+      "w": 1280,
+      "h": 1900,
+      "title": "Contrast table · both themes"
+    },
+    "alt-rail.dc.html": {
+      "x": 4240,
+      "y": 9320,
+      "w": 800,
+      "h": 560,
+      "title": "Projects in the rail (early sketch, now adopted)"
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "s01-desktop.dc.html",
+    "s01-half.dc.html",
+    "s01-phone.dc.html",
+    "s03-phone-session.dc.html",
+    "s03b-half-session.dc.html",
+    "s12-half-row-menu.dc.html",
+    "s02-subproject.dc.html",
+    "s04-snooze.dc.html",
+    "s02b-subproject-half.dc.html",
+    "s05-toast.dc.html",
+    "s06-stale-hidden.dc.html",
+    "s07-empty.dc.html",
+    "s08-late.dc.html",
+    "s09-error-format.dc.html",
+    "s09-error-projects.dc.html",
+    "s10-busy.dc.html",
+    "s11-solid.dc.html",
+    "s10b-busy-half.dc.html",
+    "tokens.dc.html",
+    "components.dc.html",
+    "contrast.dc.html",
+    "alt-rail.dc.html"
+  ],
+  "notes": {
+    "row1": {
+      "x": 0,
+      "y": -300,
+      "text": "Prototype and main view · 1280",
+      "kind": "title1",
+      "maxW": 4000
+    },
+    "row2": {
+      "x": 0,
+      "y": 1000,
+      "text": "Half-screen (800) and phone (375)",
+      "kind": "title1",
+      "maxW": 7020
+    },
+    "row3": {
+      "x": 0,
+      "y": 2300,
+      "text": "Filtering and actions",
+      "kind": "title1",
+      "maxW": 7120
+    },
+    "row5": {
+      "x": 0,
+      "y": 5140,
+      "text": "Page states: empty, scanner late, error",
+      "kind": "title1",
+      "maxW": 5360
+    },
+    "row7": {
+      "x": 0,
+      "y": 7420,
+      "text": "Stress test and solid fallback",
+      "kind": "title1",
+      "maxW": 7120
+    },
+    "row8": {
+      "x": 0,
+      "y": 9020,
+      "text": "System: tokens, components, contrast",
+      "kind": "title1",
+      "maxW": 5040
+    },
+    "changes": {
+      "x": 4080,
+      "y": 0,
+      "w": 560,
+      "size": "m",
+      "fill": "gray",
+      "text": "What changed from the brief, and why\n\n1. Project menu: at 1280 and 800 the projects sit in the rail as monogram avatars, 'All' first, coming-soon dashed and without a badge. The badge counts what needs you and turns green when something asked; the name shows on hover and in the list header. Sub-projects stay as pills above the list; the phone keeps the scrolling pill row.\n2. List: 520 px at 1280, and session titles wrap to two lines.\n3. Half-screen (800): one click on a row opens the session over the list. Snooze and Dismiss sit in each row's 'More actions' menu. No row looks selected while the slide-over is closed.\n4. Stale and Hidden keep the brief's order but look like the familiar 'Archived' row.\n5. Review and Unread badges are neutral, so Quieter stays quiet. Colour is kept for asked, stuck, blocked and errors.\n6. The filter note's number is computed (Canada: '5 more need you…').\n7. Counts over 9 read '9+' in rail badges and pills; the section heading keeps the exact count.\n8. Open session shows 'Opening…' briefly as its loading state.\n9. Tab title: '(8) Sessions needing attention', the total that needs you across all projects; '(!)' on error, never 0.\n10. Error state: the header line says only 'Last scan just now', with no file count and no status dot, so it can't look healthy next to the red banner."
+    }
+  },
+  "designSystems": []
+}

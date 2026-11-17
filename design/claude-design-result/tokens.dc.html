@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tokens</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="sn.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1280px; min-height: 1800px; box-sizing: border-box; padding: 48px; background: #F4F5F7; color: #1E1E1E; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Inter, system-ui, sans-serif; display: flex; flex-direction: column; gap: 48px">
+  <header style="display: flex; flex-direction: column; gap: 8px">
+    <h1 style="margin: 0; font-size: 32px; line-height: 40px; font-weight: 600">Tokens</h1>
+    <p style="margin: 0; font-size: 15px; line-height: 24px; color: #454D59; max-width: 72ch">Two base colours (cool grey-blue glass, near-black ink), one accent (green). State colours are semantic; red is for errors only. Every value lives in sn.css as a custom property on .sn-light and .sn-dark. Translucent swatches are shown over the backdrop.</p>
+  </header>
+
+  <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px">
+    <sc-for list="{{cols}}" as="col" hint-placeholder-count="2">
+      <div style="display: flex; flex-direction: column; gap: 32px">
+        <sc-for list="{{col.groups}}" as="g" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <div style="display: grid; grid-template-columns: 200px minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: end; padding-bottom: 8px; border-bottom: 1px solid #D5DAE0">
+              <h2 style="margin: 0; font-size: 17px; line-height: 24px; font-weight: 600">{{g.title}}</h2>
+              <span style="font-size: 13px; line-height: 16px; color: #59616D; font-weight: 600">Light</span>
+              <span style="font-size: 13px; line-height: 16px; color: #59616D; font-weight: 600">Dark</span>
+            </div>
+            <sc-for list="{{g.rows}}" as="t" hint-placeholder-count="4">
+              <div style="display: grid; grid-template-columns: 200px minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: center; min-height: 32px">
+                <code style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 13px; line-height: 16px">--{{t.name}}</code>
+                <span style="display: flex; align-items: center; gap: 8px">
+                  <span class="sn-light" style="{{t.swatch}}"></span>
+                  <span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; line-height: 16px; color: #454D59; min-width: 0; overflow-wrap: anywhere">{{t.light}}</span>
+                </span>
+                <span style="display: flex; align-items: center; gap: 8px">
+                  <span class="sn-dark" style="{{t.swatch}}"></span>
+                  <span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; line-height: 16px; color: #454D59; min-width: 0; overflow-wrap: anywhere">{{t.dark}}</span>
+                </span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+  </section>
+
+  <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <h2 style="margin: 0; padding-bottom: 8px; border-bottom: 1px solid #D5DAE0; font-size: 17px; line-height: 24px; font-weight: 600">Type scale · system UI (SF Pro)</h2>
+      <sc-for list="{{type}}" as="t" hint-placeholder-count="8">
+        <div style="display: grid; grid-template-columns: 160px minmax(0, 1fr) 120px; gap: 16px; align-items: baseline; padding: 8px 0">
+          <span style="font-size: 13px; line-height: 16px; color: #59616D">{{t.role}}</span>
+          <span style="{{t.style}}">{{t.sample}}</span>
+          <code style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; line-height: 16px; color: #454D59">{{t.spec}}</code>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 32px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; padding-bottom: 8px; border-bottom: 1px solid #D5DAE0; font-size: 17px; line-height: 24px; font-weight: 600">Spacing · 8 pt grid</h2>
+        <div style="display: flex; align-items: flex-end; gap: 24px; padding-top: 8px">
+          <sc-for list="{{space}}" as="s" hint-placeholder-count="6">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+              <span style="{{s.style}}"></span>
+              <code style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; color: #454D59">{{s.label}}</code>
+            </div>
+          </sc-for>
+        </div>
+        <p style="margin: 0; font-size: 13px; line-height: 20px; color: #59616D">4 only inside a control (badge gap, pill padding). Rows: 16 padding, 16 gap to the avatar. Panels: 24–32 padding.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; padding-bottom: 8px; border-bottom: 1px solid #D5DAE0; font-size: 17px; line-height: 24px; font-weight: 600">Radii</h2>
+        <div style="display: flex; gap: 24px; padding-top: 8px">
+          <sc-for list="{{radii}}" as="r" hint-placeholder-count="5">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+              <span style="{{r.style}}"></span>
+              <code style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; color: #454D59">{{r.label}}</code>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; padding-bottom: 8px; border-bottom: 1px solid #D5DAE0; font-size: 17px; line-height: 24px; font-weight: 600">Glass, shadow, motion</h2>
+        <sc-for list="{{effects}}" as="e" hint-placeholder-count="6">
+          <div style="display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 16px; padding: 4px 0">
+            <span style="font-size: 13px; line-height: 20px; color: #59616D">{{e.k}}</span>
+            <code style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; line-height: 20px; color: #1E1E1E">{{e.v}}</code>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1800}}'>
+const SW = 'display: inline-block; flex: none; width: 40px; height: 24px; border-radius: 8px; border: 1px solid rgba(30,42,58,.16); background: ';
+function T(name, light, dark, over) {
+  const bg = over ? 'linear-gradient(var(--' + name + '), var(--' + name + ')), var(--backdrop)' : 'var(--' + name + ')';
+  return { name: name, light: light, dark: dark, swatch: SW + bg };
+}
+const LEFT = [
+  { title: 'Surfaces', rows: [
+    T('backdrop', '#DCE2E9 + soft radials', '#161B22 + soft radials'),
+    T('backdrop-solid', '#E3E8EE', '#161B22'),
+    T('glass', 'rgba(247,249,251,.82)', 'rgba(27,33,41,.78)', true),
+    T('glass-strong', 'rgba(251,252,253,.90)', 'rgba(31,38,47,.88)', true),
+    T('glass-solid', '#EFF2F5', '#1D242C'),
+    T('glass-strong-solid', '#F6F8FA', '#202730'),
+    T('glass-line', 'rgba(30,42,58,.10)', 'rgba(255,255,255,.10)', true),
+    T('scrim', 'rgba(30,42,58,.20)', 'rgba(0,0,0,.40)', true)
+  ] },
+  { title: 'Ink and interaction', rows: [
+    T('ink-1', '#1E1E1E', '#ECEFF3'),
+    T('ink-2', '#454D59', '#BCC4CE'),
+    T('ink-3', '#59616D', '#A3ACB8'),
+    T('ink-line', 'rgba(30,42,58,.14)', 'rgba(255,255,255,.16)', true),
+    T('hover', 'rgba(30,42,58,.05)', 'rgba(255,255,255,.05)', true),
+    T('sel', 'rgba(30,42,58,.08)', 'rgba(255,255,255,.08)', true),
+    T('press', 'rgba(30,42,58,.12)', 'rgba(255,255,255,.12)', true),
+    T('focus', '#1E1E1E', '#ECEFF3'),
+    T('disabled-bg', '#DDE1E6', '#2C333C'),
+    T('disabled-ink', '#6B727D', '#8D96A2')
+  ] },
+  { title: 'Inverse surfaces', rows: [
+    T('pill-active', '#1E1E1E', '#ECEFF3'),
+    T('on-pill-active', '#FFFFFF', '#15191F'),
+    T('toast', 'rgba(30,30,30,.92)', 'rgba(236,239,243,.94)', true),
+    T('on-toast', '#FFFFFF', '#1E1E1E'),
+    T('bubble', '#FFFFFF', '#2A323C')
+  ] }
+];
+const RIGHT = [
+  { title: 'Accent (primary action + asked)', rows: [
+    T('accent', '#17784F', '#3FB37E'),
+    T('accent-hover', '#13663F', '#52C08C'),
+    T('accent-press', '#0F5434', '#34A070'),
+    T('on-accent', '#FFFFFF', '#08170F')
+  ] },
+  { title: 'States (semantic)', rows: [
+    T('stuck-ink', '#7F4700', '#F3C27A'),
+    T('stuck-bg', '#FBEBD3', '#3A2D18'),
+    T('stuck-line', '#A8691A (dashed)', '#B98432 (dashed)'),
+    T('blocked-ink', '#24497F', '#A9C6F2'),
+    T('blocked-bg', '#E2EAF6', '#1F2D42'),
+    T('blocked-line', '#4F74AC', '#6F95CF'),
+    T('err-ink', '#A6200F', '#FFB4A9'),
+    T('err-bg', '#FCE9E6', '#41201C'),
+    T('err-line', '#D98E83', '#A9554A')
+  ] },
+  { title: 'Project avatars (muted, never state hues)', rows: [
+    T('av-clay-bg', '#EBDCD3 · ink #6A4334', '#4A3830 · ink #F2DCD0'),
+    T('av-slate-bg', '#DCE3EB · ink #364A5E', '#33404D · ink #D9E4EF'),
+    T('av-mauve-bg', '#E6DFEB · ink #534064', '#3F3549 · ink #E6DAF0'),
+    T('av-sand-bg', '#EDE4CF · ink #5E4C22', '#46402F · ink #EFE5CA'),
+    T('av-stone-bg', '#E4E2DD · ink #4A463F', '#3B3A37 · ink #E4E1DA')
+  ] }
+];
+const F = "font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Inter, system-ui, sans-serif; color: #1E1E1E; ";
+const TYPE = [
+  { role: 'Page title', sample: 'Sessions needing attention', spec: '28/36 · 600', style: F + 'font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.01em' },
+  { role: 'Detail title', sample: 'TICKET-240 Web chat', spec: '24/32 · 600', style: F + 'font-size: 24px; line-height: 32px; font-weight: 600' },
+  { role: 'Empty heading', sample: 'Nothing needs you', spec: '20/28 · 600', style: F + 'font-size: 20px; line-height: 28px; font-weight: 600' },
+  { role: 'Question bubble', sample: 'Run the regression check now?', spec: '17/26 · 400', style: F + 'font-size: 17px; line-height: 26px' },
+  { role: 'Section / row title', sample: 'Needs you', spec: '15/20 · 600', style: F + 'font-size: 15px; line-height: 20px; font-weight: 600' },
+  { role: 'Needs line, body', sample: 'Use the release branch or main?', spec: '14/20 · 400', style: F + 'font-size: 14px; line-height: 20px; color: #454D59' },
+  { role: 'Meta, status', sample: 'waiting 8m', spec: '13/16 · 400', style: F + 'font-size: 13px; line-height: 16px; color: #59616D' },
+  { role: 'Badge, count', sample: 'Asked · 4', spec: '12/16 · 600', style: F + 'font-size: 12px; line-height: 16px; font-weight: 600' }
+];
+const SPACE = [4, 8, 16, 24, 32, 48].map(function (n) { return { label: String(n), style: 'display: block; width: ' + n + 'px; height: ' + n + 'px; background: #17784F; border-radius: 2px' }; });
+const RADII = [['12', 12], ['16', 16], ['24', 24], ['28', 28], ['pill', 999]].map(function (r) { return { label: r[0], style: 'display: block; width: 64px; height: 48px; border: 2px solid #1E1E1E; border-radius: ' + r[1] + 'px' }; });
+const EFFECTS = [
+  { k: 'Blur (large surfaces only)', v: 'backdrop-filter: blur(24px) saturate(160%)' },
+  { k: 'Glass edge', v: '1px solid --glass-line + inset 0 1px 0 --glass-edge' },
+  { k: 'Panel shadow, light', v: '0 1px 2px rgba(30,42,58,.06), 0 16px 40px rgba(30,42,58,.10)' },
+  { k: 'Popover shadow, light', v: '0 2px 6px rgba(30,42,58,.10), 0 24px 56px rgba(30,42,58,.20)' },
+  { k: 'Panel shadow, dark', v: '0 1px 2px rgba(0,0,0,.30), 0 16px 40px rgba(0,0,0,.35)' },
+  { k: 'Motion', v: '160 ms (hover, select) · 200 ms (sheet, chevron) · cubic-bezier(.2,.8,.2,1)' },
+  { k: 'Reduced motion', v: 'transitions off; spinner slows to 2.4 s' },
+  { k: 'Focus ring', v: '2px solid --focus, offset 2px (inset −2px on rows)' }
+];
+class Component extends DCLogic {
+  renderVals() {
+    return { cols: [{ groups: LEFT }, { groups: RIGHT }], type: TYPE, space: SPACE, radii: RADII, effects: EFFECTS };
+  }
+}
+</script>
+</body>
+</html>

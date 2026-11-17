@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Alternative: projects in the rail</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="sn.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="sn sn-light" style="width: 800px; height: 560px; padding: 24px; display: flex; gap: 16px">
+  <nav class="glass" aria-label="Projects" style="flex: none; width: 72px; border-radius: 28px; padding: 16px 0; display: flex; flex-direction: column; align-items: center; gap: 16px">
+    <sc-for list="{{projects}}" as="p" hint-placeholder-count="6">
+      <button aria-label="{{p.aria}}" style="{{p.style}}">
+        <span class="{{p.av}}">{{p.mono}}</span>
+        <sc-if value="{{p.hasBadge}}" hint-placeholder-val="{{false}}">
+          <span class="pa" style="position: absolute; right: -4px; bottom: -4px; height: 20px; padding: 0 4px; font-size: 11px; line-height: 20px; box-shadow: 0 0 0 2px #F3F5F8">{{p.badge}}</span>
+        </sc-if>
+      </button>
+    </sc-for>
+  </nav>
+  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+    <div class="glass" style="flex: 1; border-radius: 28px; padding: 8px; display: flex; flex-direction: column">
+      <h2 class="sec"><span>Needs you · Client A</span><span class="count">4</span><span class="pa">3 asked</span></h2>
+      <div class="row is-selected">
+        <span class="av av-clay" aria-hidden="true">CA</span>
+        <span class="row-main"><span class="row-top"><span class="row-title">TICKET-240 Web chat: foreign address</span><span class="row-time">waiting 8m</span></span><span class="row-bottom"><span class="row-needs">Run the regression check now, or ship as is?</span><span class="badge b-asked">Asked</span></span></span>
+      </div>
+      <div class="row">
+        <span class="av av-clay" aria-hidden="true">CA</span>
+        <span class="row-main"><span class="row-top"><span class="row-title">TICKET-231 Lead routing: local test calls</span><span class="row-time">waiting 25m</span></span><span class="row-bottom"><span class="row-needs">Will you make the two test calls now?</span><span class="badge b-asked">Asked</span></span></span>
+      </div>
+    </div>
+    <div style="background: rgba(255,255,255,.72); border: 1px dashed #59616D; border-radius: 16px; padding: 16px 24px; font-size: 14px; line-height: 20px; color: #1E1E1E">
+      <b style="font-weight: 600">Early sketch, now adopted.</b> The screens at 1280 and 800 put the projects in the rail. The final rail item is on the Components board: its badge counts what needs you and turns green when something asked; the name shows on hover and in the list header. Sub-projects stay as pills above the list, and the phone keeps the scrolling pill row.
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":800,"height":560}}'>
+const BASE = 'position: relative; width: 48px; height: 48px; padding: 0; border: 0; background: transparent; border-radius: 999px; display: grid; place-items: center; cursor: pointer; ';
+const P = [
+  { mono: 'All', av: 'av av-sm', aria: 'All projects, 4 asked', badge: '4', extra: '' },
+  { mono: 'CA', av: 'av av-sm av-clay', aria: 'Client A, 3 asked', badge: '3', active: true },
+  { mono: 'IT', av: 'av av-sm av-slate', aria: 'Internal Tools, 1 asked', badge: '1' },
+  { mono: 'KB', av: 'av av-sm av-mauve', aria: 'Knowledge Base' },
+  { mono: 'OT', av: 'av av-sm av-sand', aria: 'Other' },
+  { mono: 'CB', av: 'av av-sm av-stone', aria: 'Client B, coming soon', soon: true }
+];
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      projects: P.map(function (p) {
+        return {
+          mono: p.mono, aria: p.aria, hasBadge: !!p.badge, badge: p.badge,
+          av: p.av + (p.mono === 'All' ? '' : ''),
+          style: BASE + (p.active ? 'box-shadow: 0 0 0 2px #1E1E1E;' : '') + (p.soon ? 'opacity: .55;' : '') + (p.mono === 'All' ? 'background: #1E1E1E; color: #FFFFFF; font: 600 13px/1 -apple-system, system-ui, sans-serif;' : '')
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

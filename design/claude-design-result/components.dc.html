@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Components, every state</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="sn.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1440px; min-height: 3300px; box-sizing: border-box; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); background: #F4F5F7">
+  <sc-for list="{{themes}}" as="th" hint-placeholder-count="2">
+    <div class="{{th.cls}}" style="padding: 48px; display: flex; flex-direction: column; gap: 40px; overflow: visible">
+
+      <h1 style="margin: 0; font-size: 28px; line-height: 36px; font-weight: 600; color: var(--ink-1)">Components · {{th.name}}</h1>
+
+      <section style="display: flex; flex-direction: column; gap: 16px">
+        <h2 style="margin: 0; font-size: 13px; line-height: 16px; font-weight: 600; color: var(--ink-3); letter-spacing: 0.04em; text-transform: uppercase">Buttons · primary, secondary, tertiary</h2>
+        <div class="glass-strong" style="border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 8px">
+          <sc-for list="{{btnStates}}" as="b" hint-placeholder-count="5">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span style="width: 88px; flex: none; font-size: 13px; line-height: 16px; color: var(--ink-3)">{{b.label}}</span>
+              <button class="{{b.p}}" disabled="{{b.dis}}">
+                <sc-if value="{{b.loading}}" hint-placeholder-val="{{false}}"><svg class="ic ic-sm spin" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9"></path></svg>Opening…</sc-if>
+                <sc-if value="{{b.notLoading}}" hint-placeholder-val="{{true}}">Open session<svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"></path></svg></sc-if>
+              </button>
+              <button class="{{b.s}}" disabled="{{b.dis}}">
+                <sc-if value="{{b.loading}}" hint-placeholder-val="{{false}}"><svg class="ic ic-sm spin" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9"></path></svg>Snoozing…</sc-if>
+                <sc-if value="{{b.notLoading}}" hint-placeholder-val="{{true}}">Snooze<svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></sc-if>
+              </button>
+              <button class="{{b.t}}" disabled="{{b.dis}}">
+                <sc-if value="{{b.loading}}" hint-placeholder-val="{{false}}"><svg class="ic ic-sm spin" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9"></path></svg>Dismissing…</sc-if>
+                <sc-if value="{{b.notLoading}}" hint-placeholder-val="{{true}}">Dismiss</sc-if>
+              </button>
+            </div>
+          </sc-for>
+          <div style="display: flex; align-items: center; gap: 8px; padding-top: 8px">
+            <span style="width: 88px; flex: none; font-size: 13px; line-height: 16px; color: var(--ink-3)">Focus</span>
+            <button class="btn btn-primary is-focus">Open session</button>
+            <button class="btn btn-secondary is-focus">Show again</button>
+            <button class="btn btn-tertiary is-focus">Show all projects</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; padding-top: 8px">
+            <span style="width: 88px; flex: none; font-size: 13px; line-height: 16px; color: var(--ink-3)">Icon only</span>
+            <button class="icon-btn plain is-on" aria-label="Light theme"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></button>
+            <button class="icon-btn plain" aria-label="Dark theme"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg></button>
+            <button class="icon-btn is-hover" aria-label="Back to sessions"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"></path></svg></button>
+            <button class="icon-btn is-focus" aria-label="Close session"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+            <span style="font-size: 13px; line-height: 16px; color: var(--ink-3)">44 px · theme on, off, hover, focus</span>
+          </div>
+        </div>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 16px">
+        <h2 style="margin: 0; font-size: 13px; line-height: 16px; font-weight: 600; color: var(--ink-3); letter-spacing: 0.04em; text-transform: uppercase">State badges · colour, label and shape</h2>
+        <div class="glass" style="border-radius: 24px; padding: 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
+          <span class="badge b-asked"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 21l1.9-5.6A8.5 8.5 0 1 1 21 11.5z"></path></svg>Asked</span>
+          <span class="badge b-stuck"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10M7 21h10M8 3v3l4 6 4-6V3M8 21v-3l4-6 4 6v3"></path></svg>Stuck</span>
+          <span class="badge b-blocked"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M10 9v6M14 9v6"></path></svg>Blocked</span>
+          <span class="badge b-review"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Review</span>
+          <span class="badge b-unread"><span class="udot" aria-hidden="true"></span>Unread</span>
+          <span style="flex-basis: 100%; font-size: 13px; line-height: 20px; color: var(--ink-3)">Filled = asked · dashed = stuck · solid outline = blocked · grey outline = review · dot = unread. Reads in greyscale.</span>
+        </div>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 16px">
+        <h2 style="margin: 0; font-size: 13px; line-height: 16px; font-weight: 600; color: var(--ink-3); letter-spacing: 0.04em; text-transform: uppercase">Project avatars · monograms</h2>
+        <div class="glass" style="border-radius: 24px; padding: 24px; display: flex; align-items: center; gap: 16px">
+          <span class="av av-clay">CA</span>
+          <span class="av av-slate">IT</span>
+          <span class="av av-mauve">KB</span>
+          <span class="av av-sand">OT</span>
+          <span class="av av-stone">CB</span>
+          <span class="av av-sm av-clay">CA</span>
+          <span class="av av-xs av-clay">CA</span>
+          <span style="font-size: 13px; line-height: 16px; color: var(--ink-3)">48 · 40 · 32</span>
+        </div>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 16px">
+        <h2 style="margin: 0; font-size: 13px; line-height: 16px; font-weight: 600; color: var(--ink-3); letter-spacing: 0.04em; text-transform: uppercase">Project pills · phone row, and sub-projects at every width</h2>
+        <div class="glass" style="border-radius: 24px; padding: 24px; display: flex; flex-wrap: wrap; gap: 8px">
+          <button class="pill is-active" aria-pressed="true"><span>All</span><span class="pc">8</span><span class="pa">4 asked</span></button>
+          <button class="pill"><span>Client A</span><span class="pc">4</span><span class="pa">3 asked</span></button>
+          <button class="pill is-hover"><span>Internal Tools</span><span class="pc">2</span><span class="pa">1 asked</span></button>
+          <button class="pill is-focus"><span>Knowledge Base</span><span class="pc">1</span></button>
+          <button class="pill soon"><span>Client B</span><span class="soon-tag">soon</span></button>
+          <button class="pill"><span>All</span><span class="pc">16</span><span class="pa">9+ asked</span></button>
+          <span style="flex-basis: 100%; font-size: 13px; line-height: 16px; color: var(--ink-3)">Active · default · hover · focus · coming soon · overflow</span>
+          <div class="pills sub" style="padding: 8px 0 0; flex-basis: 100%">
+            <button class="pill"><span>All</span><span class="pc">4</span><span class="pa">3 asked</span></button>
+            <button class="pill"><span>US</span><span class="pc">1</span><span class="pa">1 asked</span></button>
+            <button class="pill is-active"><span>Canada</span><span class="pc">3</span><span class="pa">2 asked</span></button>
+            <button class="pill"><span>General</span><span class="pc">0</span></button>
+          </div>
+          <span style="flex-basis: 100%; font-size: 13px; line-height: 16px; color: var(--ink-3)">Sub-project row: lighter active state, so the hierarchy reads.</span>
+        </div>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 16px">
+        <h2 style="margin: 0; font-size: 13px; line-height: 16px; font-weight: 600; color: var(--ink-3); letter-spacing: 0.04em; text-transform: uppercase">Project rail · 1280 and 800</h2>
+        <div class="glass" style="border-radius: 24px; padding: 24px 32px; display: flex; flex-wrap: wrap; align-items: center; gap: 24px">
+          <button class="rail-item is-active" aria-pressed="true" aria-label="All projects, 8 need you, 4 asked"><span class="av rail-av av-all" aria-hidden="true">All</span><span class="rail-badge has-asked" aria-hidden="true">8</span></button>
+          <button class="rail-item" aria-pressed="false" aria-label="Client A, 4 need you, 3 asked"><span class="av rail-av av-clay" aria-hidden="true">CA</span><span class="rail-badge has-asked" aria-hidden="true">4</span></button>
+          <button class="rail-item" aria-pressed="false" aria-label="Knowledge Base, 1 needs you"><span class="av rail-av av-mauve" aria-hidden="true">KB</span><span class="rail-badge" aria-hidden="true">1</span></button>
+          <button class="rail-item is-focus" aria-pressed="false" aria-label="Other, 1 needs you"><span class="av rail-av av-sand" aria-hidden="true">OT</span><span class="rail-badge" aria-hidden="true">1</span></button>
+          <button class="rail-item soon" aria-pressed="false" aria-label="Client B, coming soon"><span class="av rail-av av-soon" aria-hidden="true">CB</span></button>
+          <button class="rail-item" aria-pressed="false" aria-label="All projects, 16 need you, 12 asked"><span class="av rail-av av-all" aria-hidden="true">All</span><span class="rail-badge has-asked" aria-hidden="true">9+</span></button>
+          <span style="flex-basis: 100%; font-size: 13px; line-height: 20px; color: var(--ink-3)">Active ring · badge counts what needs you, green when something asked, dark when not · focus · coming soon (dashed, no badge) · overflow 9+</span>
+          <button class="rail-item is-hover is-tip" aria-pressed="false" aria-label="Internal Tools, 2 need you, 1 asked"><span class="av rail-av av-slate" aria-hidden="true">IT</span><span class="rail-badge has-asked" aria-hidden="true">2</span><span class="rail-tip" aria-hidden="true">Internal Tools · 2 need you · 1 asked</span></button>
+          <span style="flex: 1; min-width: 0; padding-left: 280px; font-size: 13px; line-height: 20px; color: var(--ink-3)">Hover or focus shows the name</span>
+        </div>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 16px">
+        <h2 style="margin: 0; font-size: 13px; line-height: 16px; font-weight: 600; color: var(--ink-3); letter-spacing: 0.04em; text-transform: uppercase">Row at 800 · one click opens it; More actions menu</h2>
+        <div class="glass lay-half" style="border-radius: 28px; padding: 8px; display: flex; flex-direction: column">
+          <div class="row-wrap">
+            <button class="row"><span class="av av-clay" aria-hidden="true">CA</span><span class="row-main"><span class="row-top"><span class="row-title">TICKET-240 Web chat: foreign address</span><span class="row-time">waiting 8m</span></span><span class="row-bottom"><span class="row-needs">Run the regression check now, or ship as is?</span><span class="badge b-asked"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 21l1.9-5.6A8.5 8.5 0 1 1 21 11.5z"></path></svg>Asked</span></span></span></button>
+            <div class="more"><button class="btn btn-tertiary btn-sm more-btn is-pressed" aria-haspopup="menu" aria-expanded="true" aria-label="More actions: TICKET-240 Web chat: foreign address">More actions<svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button></div>
+          </div>
+          <div class="menu glass-strong" role="menu" aria-label="More actions: TICKET-240 Web chat: foreign address" style="position: static; align-self: flex-end; margin: 0 8px 8px 0">
+            <button class="menu-item is-hover" role="menuitem"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Snooze 1 hour (back at 15:42)</button>
+            <button class="menu-item" role="menuitem"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 5v4M5.6 9.6l1.4 1.4M18.4 9.6L17 11"></path></svg>Snooze until tomorrow 9:00</button>
+            <button class="menu-item" role="menuitem"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0 1 12 6c5 0 9 6 9 6a16 16 0 0 1-2.6 3.2M6.6 6.6A16 16 0 0 0 3 12s4 6 9 6a9 9 0 0 0 4.4-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg>Dismiss</button>
+          </div>
+          <div class="row-wrap" style="background: var(--hover)">
+            <button class="row"><span class="av av-slate" aria-hidden="true">IT</span><span class="row-main"><span class="row-top"><span class="row-title">Release checklist generator: pull merged changes from the last two weeks</span><span class="row-time">waiting 40m</span></span><span class="row-bottom"><span class="row-needs">Use the release branch or main as the source?</span><span class="badge b-asked"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 21l1.9-5.6A8.5 8.5 0 1 1 21 11.5z"></path></svg>Asked</span></span></span></button>
+            <div class="more"><button class="btn btn-tertiary btn-sm more-btn is-focus" aria-haspopup="menu" aria-expanded="false" aria-label="More actions: Release checklist generator">More actions<svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button></div>
+          </div>
+          <span style="padding: 8px 16px; font-size: 12px; line-height: 16px; color: var(--ink-3)">Menu open · row hover with the button focused · titles wrap to two lines. No row looks selected while the slide-over is closed.</span>
+        </div>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 16px">
+        <h2 style="margin: 0; font-size: 13px; line-height: 16px; font-weight: 600; color: var(--ink-3); letter-spacing: 0.04em; text-transform: uppercase">Section headers</h2>
+        <div class="glass" style="border-radius: 24px; padding: 0 8px 16px">
+          <h3 class="sec"><span>Needs you</span><span class="count">8</span><span class="pa">4 asked</span></h3>
+          <h3 class="sec"><span>Quieter</span><span class="count">6</span></h3>
+          <button class="arch" aria-expanded="false">
+            <span class="arch-ic" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1.5"></rect><path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M10 13h4"></path></svg></span>
+            <span class="arch-label">Stale: archive or revive?</span><span class="arch-count">4</span>
+            <svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+          </button>
+          <button class="arch is-open is-hover" aria-expanded="true">
+            <span class="arch-ic" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0 1 12 6c5 0 9 6 9 6a16 16 0 0 1-2.6 3.2M6.6 6.6A16 16 0 0 0 3 12s4 6 9 6a9 9 0 0 0 4.4-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg></span>
+            <span class="arch-label">Hidden</span><span class="arch-count">2</span>
+            <svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+          </button>
+        </div>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 16px">
+        <h2 style="margin: 0; font-size: 13px; line-height: 16px; font-weight: 600; color: var(--ink-3); letter-spacing: 0.04em; text-transform: uppercase">Session rows · selected, hover, focus, each state</h2>
+        <div class="glass" style="border-radius: 28px; padding: 8px; display: flex; flex-direction: column">
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="7">
+            <div style="display: flex; flex-direction: column">
+              <span style="padding: 8px 16px 0; font-size: 12px; line-height: 16px; color: var(--ink-3)">{{r.note}}</span>
+              <button class="{{r.cls}}">
+                <span class="{{r.av}}" aria-hidden="true">{{r.mono}}</span>
+                <span class="row-main">
+                  <span class="row-top"><span class="row-title">{{r.title}}</span><span class="row-time">{{r.time}}</span></span>
+                  <span class="row-bottom">
+                    <span class="{{r.needsCls}}">{{r.needs}}</span>
+                    <span class="{{r.badgeCls}}">
+                      <sc-if value="{{r.isAsked}}" hint-placeholder-val="{{true}}"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 21l1.9-5.6A8.5 8.5 0 1 1 21 11.5z"></path></svg></sc-if>
+                      <sc-if value="{{r.isStuck}}" hint-placeholder-val="{{false}}"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10M7 21h10M8 3v3l4 6 4-6V3M8 21v-3l4-6 4 6v3"></path></svg></sc-if>
+                      <sc-if value="{{r.isBlocked}}" hint-placeholder-val="{{false}}"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M10 9v6M14 9v6"></path></svg></sc-if>
+                      <sc-if value="{{r.isReview}}" hint-placeholder-val="{{false}}"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+                      <sc-if value="{{r.isUnread}}" hint-placeholder-val="{{false}}"><span class="udot" aria-hidden="true"></span></sc-if>
+                      {{r.label}}
+                    </span>
+                  </span>
+                </span>
+              </button>
+            </div>
+          </sc-for>
+          <span style="padding: 8px 16px 0; font-size: 12px; line-height: 16px; color: var(--ink-3)">Scheduled task · one line</span>
+          <button class="row sched">
+            <span class="sched-ic" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span>
+            <span class="sched-line"><b>Scheduled task: chat-mention-ping</b> · Sign the chat connector back in with /mcp</span>
+            <span class="sched-side"><span class="row-time">waiting 4m</span><span class="badge b-blocked"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M10 9v6M14 9v6"></path></svg>Blocked</span></span>
+          </button>
+          <span style="padding: 8px 16px 0; font-size: 12px; line-height: 16px; color: var(--ink-3)">Hidden · snoozed</span>
+          <div class="hrow">
+            <span class="av av-mauve" aria-hidden="true">KB</span>
+            <span class="row-main"><span class="row-title">Glossary cleanup</span><span class="hreason"><svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Snoozed until 15:42</span></span>
+            <button class="btn btn-secondary btn-sm">Show again</button>
+          </div>
+        </div>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 16px">
+        <h2 style="margin: 0; font-size: 13px; line-height: 16px; font-weight: 600; color: var(--ink-3); letter-spacing: 0.04em; text-transform: uppercase">Header status line · normal, late and error</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 16px">
+          <span class="status"><span class="dot" aria-hidden="true"></span>Scanned just now · 120 session files</span>
+          <span class="status late"><svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17v.5"></path></svg>Scanner hasn't run for 9m</span>
+          <span class="status">Last scan just now</span>
+        </div>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 16px">
+        <h2 style="margin: 0; font-size: 13px; line-height: 16px; font-weight: 600; color: var(--ink-3); letter-spacing: 0.04em; text-transform: uppercase">Error banner · empty state</h2>
+        <div class="banner" role="alert">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.5"></path></svg>
+          <div><h3 style="margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; color: var(--err-ink)">Can't show sessions right now</h3><p>Can't read session status, format may have changed (120 of 120 files unreadable).</p></div>
+        </div>
+        <div class="glass" style="border-radius: 24px">
+          <div class="empty">
+            <span class="em-icon" aria-hidden="true"><svg class="ic ic-lg" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+            <h3>Nothing needs you right now</h3>
+            <p>Checked just now</p>
+          </div>
+        </div>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 16px">
+        <h2 style="margin: 0; font-size: 13px; line-height: 16px; font-weight: 600; color: var(--ink-3); letter-spacing: 0.04em; text-transform: uppercase">Detail panel parts · bubble, action bar, menu, toast</h2>
+        <div class="glass-strong" style="border-radius: 28px; overflow: hidden; display: flex; flex-direction: column">
+          <div style="padding: 24px 32px; display: flex; flex-direction: column; gap: 16px">
+            <div class="bubble-wrap">
+              <span class="bubble-label">The session asked</span>
+              <p class="bubble">Run the regression check now, or ship as is?</p>
+            </div>
+            <div class="bubble-wrap">
+              <span class="bubble-label">Status</span>
+              <p class="bubble is-note">Turn started but never finished: may be a permission prompt or a slow tool.</p>
+            </div>
+          </div>
+          <div class="actions">
+            <p class="hint">Opens it in the Claude app.</p>
+            <div class="act-btns">
+              <button class="btn btn-tertiary">Dismiss</button>
+              <button class="btn btn-secondary">Snooze<svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+              <button class="btn btn-primary">Open session<svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"></path></svg></button>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: flex-end; gap: 24px; flex-wrap: wrap">
+          <div class="menu glass-strong" role="menu" aria-label="Snooze" style="position: static">
+            <button class="menu-item is-hover" role="menuitem"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Snooze 1 hour (back at 15:42)</button>
+            <button class="menu-item" role="menuitem"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 5v4M5.6 9.6l1.4 1.4M18.4 9.6L17 11"></path></svg>Snooze until tomorrow 9:00</button>
+          </div>
+          <div class="toast" role="status" style="position: static; transform: none">
+            <span>Dismissed until it changes</span>
+            <button class="toast-btn">Undo</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":3300}}'>
+const BTN = [
+  { label: 'Default', m: '' },
+  { label: 'Hover', m: ' is-hover' },
+  { label: 'Pressed', m: ' is-pressed' },
+  { label: 'Disabled', m: ' is-disabled', dis: true },
+  { label: 'Loading', m: ' is-loading', dis: true, loading: true }
+].map(function (s) {
+  return { label: s.label, p: 'btn btn-primary' + s.m, s: 'btn btn-secondary' + s.m, t: 'btn btn-tertiary' + s.m, dis: !!s.dis, loading: !!s.loading, notLoading: !s.loading };
+});
+function R(note, cls, av, mono, title, time, needs, needsCls, st, label) {
+  return { note: note, cls: cls, av: 'av av-' + av, mono: mono, title: title, time: time, needs: needs, needsCls: needsCls, badgeCls: 'badge b-' + st, label: label,
+    isAsked: st === 'asked', isStuck: st === 'stuck', isBlocked: st === 'blocked', isReview: st === 'review', isUnread: st === 'unread' };
+}
+const ROWS = [
+  R('Asked · selected', 'row is-selected', 'clay', 'CA', 'TICKET-240 Web chat: foreign address', 'waiting 8m', 'Run the regression check now, or ship as is?', 'row-needs', 'asked', 'Asked'),
+  R('Asked · hover · two-line question', 'row is-hover', 'clay', 'CA', 'TICKET-231 Lead routing: local test calls', 'waiting 25m', 'Will you make the two test calls now? I need one from a local number and one from abroad, then the call IDs from the log so I can compare the two routing paths.', 'row-needs', 'asked', 'Asked'),
+  R('Asked · keyboard focus', 'row is-focus', 'slate', 'IT', 'Release checklist generator: pull merged changes from the last two weeks', 'waiting 40m', 'Use the release branch or main as the source?', 'row-needs', 'asked', 'Asked'),
+  R('Stuck', 'row', 'clay', 'CA', 'TICKET-207 Contact text update', 'waiting 22h', 'Turn started but never finished: may be a permission prompt or a slow tool.', 'row-needs note', 'stuck', 'Stuck'),
+  R('Blocked', 'row', 'mauve', 'KB', 'Latest config changes', 'waiting 2d', 'Pick a fix: drop the transfer step (my pick) or reorder the steps', 'row-needs', 'blocked', 'Blocked'),
+  R('Review (Quieter)', 'row quiet', 'clay', 'CA', 'TICKET-241 Office number fallback', 'waiting 4m', 'Down to the last run: regression check', 'row-needs one', 'review', 'Review'),
+  R('Unread (Quieter) · bold title + dot', 'row quiet is-unread', 'slate', 'IT', 'Flow map: path shown by default', 'waiting 5d', "Bordered 'Read again' button added; checked at 1500 px", 'row-needs one', 'unread', 'Unread')
+];
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      themes: [{ cls: 'sn sn-light', name: 'light' }, { cls: 'sn sn-dark', name: 'dark' }],
+      btnStates: BTN,
+      rows: ROWS
+    };
+  }
+}
+</script>
+</body>
+</html>

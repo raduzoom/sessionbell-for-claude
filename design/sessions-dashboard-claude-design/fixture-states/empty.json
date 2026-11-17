@@ -1,0 +1,229 @@
+{
+  "schema": 1,
+  "error": null,
+  "generatedAgoMs": 20000,
+  "projects": [
+    {
+      "id": "client-a",
+      "name": "Client A",
+      "children": [
+        {
+          "id": "client-a/us",
+          "name": "Client A US"
+        },
+        {
+          "id": "client-a/canada",
+          "name": "Client A Canada"
+        }
+      ]
+    },
+    {
+      "id": "client-b",
+      "name": "Client B",
+      "comingSoon": true,
+      "children": []
+    },
+    {
+      "id": "client-c",
+      "name": "Client C",
+      "comingSoon": true,
+      "children": []
+    },
+    {
+      "id": "tools",
+      "name": "Internal Tools",
+      "children": []
+    },
+    {
+      "id": "kb",
+      "name": "Knowledge Base",
+      "children": []
+    },
+    {
+      "id": "other",
+      "name": "Other",
+      "children": []
+    }
+  ],
+  "main": [],
+  "scheduled": [],
+  "stale": [
+    {
+      "sessionId": "local_example-08",
+      "title": "Multi-phase ticket planning",
+      "state": "stuck",
+      "project": "client-a",
+      "subproject": "client-a/canada",
+      "repo": "client-a-bot-canada",
+      "org": "acct/org",
+      "needs": "",
+      "lastActivityAgoMs": 1036800000,
+      "waitingMs": 1036800000,
+      "link": "claude://claude.ai/epitaxy/local_example-08"
+    },
+    {
+      "sessionId": "local_example-09",
+      "title": "Country analytics from caller location",
+      "state": "blocked",
+      "project": "client-a",
+      "subproject": "client-a/canada",
+      "repo": "client-a-bot-canada",
+      "org": "acct/org",
+      "needs": "Confirm the reporting tenant before I post the request",
+      "lastActivityAgoMs": 1728000000,
+      "waitingMs": 1728000000,
+      "link": "claude://claude.ai/epitaxy/local_example-09"
+    },
+    {
+      "sessionId": "local_example-10",
+      "title": "Examples showcase phase 0",
+      "state": "blocked",
+      "project": "kb",
+      "subproject": null,
+      "repo": "knowledge-base",
+      "org": "acct/org",
+      "needs": "Commit and push, or review first?",
+      "lastActivityAgoMs": 3196800000,
+      "waitingMs": 3196800000,
+      "link": "claude://claude.ai/epitaxy/local_example-10"
+    },
+    {
+      "sessionId": "local_example-11",
+      "title": "Claude settings: permissions default",
+      "state": "blocked",
+      "project": "other",
+      "subproject": null,
+      "repo": "scratch",
+      "org": "acct/org",
+      "needs": "Check the status line for auto mode; press Shift+Tab if it's off",
+      "lastActivityAgoMs": 3801600000,
+      "waitingMs": 3801600000,
+      "link": "claude://claude.ai/epitaxy/local_example-11"
+    }
+  ],
+  "quiet": [
+    {
+      "sessionId": "local_example-12",
+      "title": "TICKET-241 Office number fallback",
+      "state": "review_ready",
+      "project": "client-a",
+      "subproject": "client-a/canada",
+      "repo": "client-a-bot-canada",
+      "org": "acct/org",
+      "needs": "Down to the last run: regression check",
+      "lastActivityAgoMs": 240000,
+      "waitingMs": 240000,
+      "link": "claude://claude.ai/epitaxy/local_example-12"
+    },
+    {
+      "sessionId": "local_example-13",
+      "title": "Voice handoff with foreign address",
+      "state": "review_ready",
+      "project": "client-a",
+      "subproject": "client-a/us",
+      "repo": "client-a-bot",
+      "org": "acct/org",
+      "needs": "Replied on both review threads; open gaps go into the drafts",
+      "lastActivityAgoMs": 1123200000,
+      "waitingMs": 1123200000,
+      "link": "claude://claude.ai/epitaxy/local_example-13"
+    },
+    {
+      "sessionId": "local_example-14",
+      "title": "Flow map: path shown by default",
+      "state": "unread",
+      "project": "tools",
+      "subproject": null,
+      "repo": "internal-tools",
+      "org": "acct/org",
+      "needs": "Bordered 'Read again' button added; checked at 1500 px",
+      "lastActivityAgoMs": 432000000,
+      "waitingMs": 432000000,
+      "link": "claude://claude.ai/epitaxy/local_example-14"
+    },
+    {
+      "sessionId": "local_example-15",
+      "title": "TICKET-190 Ticket inquiry",
+      "state": "unread",
+      "project": "client-a",
+      "subproject": "client-a/canada",
+      "repo": "client-a-bot-canada",
+      "org": "acct/org",
+      "needs": "Integration logs checked; spec updated, not committed",
+      "lastActivityAgoMs": 691200000,
+      "waitingMs": 691200000,
+      "link": "claude://claude.ai/epitaxy/local_example-15"
+    },
+    {
+      "sessionId": "local_example-16",
+      "title": "Release walkthrough docs",
+      "state": "unread",
+      "project": "kb",
+      "subproject": null,
+      "repo": "knowledge-base",
+      "org": "acct/org",
+      "needs": "Docs updated; deploy table fixed",
+      "lastActivityAgoMs": 777600000,
+      "waitingMs": 777600000,
+      "link": "claude://claude.ai/epitaxy/local_example-16"
+    },
+    {
+      "sessionId": "local_example-17",
+      "title": "Mac scheduler app",
+      "state": "unread",
+      "project": "other",
+      "subproject": null,
+      "repo": "scheduler-app",
+      "org": "acct/org",
+      "needs": "Login item registered; restart to verify",
+      "lastActivityAgoMs": 604800000,
+      "waitingMs": 604800000,
+      "link": "claude://claude.ai/epitaxy/local_example-17"
+    }
+  ],
+  "hidden": [
+    {
+      "sessionId": "local_example-18",
+      "title": "Glossary cleanup",
+      "state": "asked",
+      "project": "kb",
+      "subproject": null,
+      "repo": "knowledge-base",
+      "org": "acct/org",
+      "needs": "Merge the two 'handoff' entries into one?",
+      "lastActivityAgoMs": 7200000,
+      "waitingMs": 7200000,
+      "link": "claude://claude.ai/epitaxy/local_example-18",
+      "section": "main",
+      "hiddenBy": {
+        "kind": "snooze",
+        "untilInMs": 3600000
+      }
+    },
+    {
+      "sessionId": "local_example-19",
+      "title": "Font licence check",
+      "state": "blocked",
+      "project": "other",
+      "subproject": null,
+      "repo": "scratch",
+      "org": "acct/org",
+      "needs": "Buy the desktop licence, or switch to the free family?",
+      "lastActivityAgoMs": 259200000,
+      "waitingMs": 259200000,
+      "link": "claude://claude.ai/epitaxy/local_example-19",
+      "section": "main",
+      "hiddenBy": {
+        "kind": "dismiss"
+      }
+    }
+  ],
+  "counts": {
+    "main": 0,
+    "asked": 0,
+    "stale": 4,
+    "quiet": 6,
+    "hidden": 2,
+    "scanned": 120
+  }
+}

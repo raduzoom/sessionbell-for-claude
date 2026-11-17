@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Contrast table</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1280px; min-height: 1900px; box-sizing: border-box; padding: 48px; background: #F4F5F7; color: #1E1E1E; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Inter, system-ui, sans-serif; display: flex; flex-direction: column; gap: 32px">
+  <header style="display: flex; flex-direction: column; gap: 8px">
+    <h1 style="margin: 0; font-size: 32px; line-height: 40px; font-weight: 600">Contrast table</h1>
+    <p style="margin: 0; font-size: 15px; line-height: 24px; color: #454D59; max-width: 80ch">WCAG 2.1 ratios, computed. Glass is measured over the worst part of the backdrop: the darkest region in light (#C9D2DC), the lightest in dark (#262E38). Glass composites: light list #EFF2F5, detail #F6F8FA, selected row #DEE2E6; dark list #1D242C, detail #202730, selected row #2F363D. The solid fallback uses exactly these composites, so it passes with the same numbers. Target: 4.5:1 text, 3:1 large text, icons and meaningful borders. All 82 pairs pass.</p>
+  </header>
+
+  <div role="table" aria-label="Contrast ratios, light and dark" style="display: flex; flex-direction: column; background: #FFFFFF; border: 1px solid #D5DAE0; border-radius: 16px; overflow: hidden">
+    <div role="row" style="display: grid; grid-template-columns: 136px minmax(0, 1fr) 248px 248px 72px; gap: 16px; align-items: center; padding: 16px 24px; background: #EBEEF2; font-size: 13px; line-height: 16px; font-weight: 600; color: #454D59">
+      <span role="columnheader">Group</span>
+      <span role="columnheader">Pair</span>
+      <span role="columnheader">Light</span>
+      <span role="columnheader">Dark</span>
+      <span role="columnheader">Needs</span>
+    </div>
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="12">
+      <div role="row" style="{{r.rowStyle}}">
+        <span role="cell" style="font-size: 13px; line-height: 16px; color: #59616D">{{r.g}}</span>
+        <span role="cell" style="font-size: 14px; line-height: 20px">{{r.pair}}</span>
+        <span role="cell" style="display: flex; align-items: center; gap: 8px">
+          <span style="{{r.lSample}}">Aa</span>
+          <span style="font-size: 14px; line-height: 20px; font-weight: 600; min-width: 64px">{{r.lr}}</span>
+          <span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 11px; line-height: 16px; color: #59616D">{{r.lfg}} / {{r.lbg}}</span>
+        </span>
+        <span role="cell" style="display: flex; align-items: center; gap: 8px">
+          <span style="{{r.dSample}}">Aa</span>
+          <span style="font-size: 14px; line-height: 20px; font-weight: 600; min-width: 64px">{{r.dr}}</span>
+          <span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 11px; line-height: 16px; color: #59616D">{{r.dfg}} / {{r.dbg}}</span>
+        </span>
+        <span role="cell" style="font-size: 13px; line-height: 16px; color: #454D59">{{r.need}} ✓</span>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1900}}'>
+const L = [
+['Header','Page title (ink 1) on backdrop','#1E1E1E','#C9D2DC',10.9,3],
+['Header','Status line (ink 2) on chip','#454D59','#C0CAD4',5.14,4.5],
+['Header','Late warning on warning chip','#7F4700','#FBEBD3',6.39,4.5],
+['Text on glass','Ink 1 on list glass','#1E1E1E','#EFF2F5',14.84,4.5],
+['Text on glass','Ink 2 on list glass','#454D59','#EFF2F5',7.6,4.5],
+['Text on glass','Ink 3 on list glass','#59616D','#EFF2F5',5.57,4.5],
+['Text on glass','Ink 1 on selected row','#1E1E1E','#DEE2E6',12.8,4.5],
+['Text on glass','Ink 2 on selected row','#454D59','#DEE2E6',6.56,4.5],
+['Text on glass','Ink 3 on selected row','#59616D','#DEE2E6',4.81,4.5],
+['Text on glass','Ink 1 on detail glass','#1E1E1E','#F6F8FA',15.66,4.5],
+['Text on glass','Ink 2 on detail glass','#454D59','#F6F8FA',8.02,4.5],
+['Text on glass','Ink 3 on detail glass','#59616D','#F6F8FA',5.88,4.5],
+['Text on glass','Question bubble text','#1E1E1E','#FFFFFF',16.67,4.5],
+['Buttons','Open session label on accent','#FFFFFF','#17784F',5.47,4.5],
+['Buttons','Secondary label on detail glass','#1E1E1E','#F6F8FA',15.66,4.5],
+['Buttons','Secondary border vs glass','#454D59','#F6F8FA',8.02,3],
+['Buttons','Focus ring vs glass','#1E1E1E','#EFF2F5',14.84,3],
+['Pills','Active pill label','#FFFFFF','#1E1E1E',16.67,4.5],
+['Pills','Active pill count','#FFFFFF','#4B4B4B',8.72,4.5],
+['Pills','Count chip','#1E1E1E','#DEE2E6',12.8,4.5],
+['Pills','Asked chip label','#FFFFFF','#17784F',5.47,4.5],
+['Rail','Count badge, something asked','#FFFFFF','#17784F',5.47,4.5],
+['Rail','Count badge, nothing asked; name tooltip','#FFFFFF','#1E1E1E',16.67,4.5],
+['Rail','Coming-soon monogram and dashed ring','#59616D','#EFF2F5',5.57,4.5],
+['Badges','Asked badge label','#FFFFFF','#17784F',5.47,4.5],
+['Badges','Asked fill vs glass (shape)','#17784F','#EFF2F5',4.87,3],
+['Badges','Stuck badge label','#7F4700','#FBEBD3',6.39,4.5],
+['Badges','Stuck dashed border vs glass','#A8691A','#EFF2F5',3.98,3],
+['Badges','Blocked badge label','#24497F','#E2EAF6',7.43,4.5],
+['Badges','Blocked border vs glass','#4F74AC','#EFF2F5',4.22,3],
+['Badges','Review label on glass','#454D59','#EFF2F5',7.6,4.5],
+['Badges','Review border vs glass','#59616D','#EFF2F5',5.57,3],
+['Badges','Unread dot vs glass','#1E1E1E','#EFF2F5',14.84,3],
+['Error and toast','Error heading on error bg','#A6200F','#FCE9E6',6.33,4.5],
+['Error and toast','Error reason on error bg','#1E1E1E','#FCE9E6',14.24,4.5],
+['Error and toast','Toast text and Undo','#FFFFFF','#2C2C2D',13.95,4.5],
+['Avatars','Monogram CA (clay)','#6A4334','#EBDCD3',6.37,4.5],
+['Avatars','Monogram IT (slate)','#364A5E','#DCE3EB',7.06,4.5],
+['Avatars','Monogram KB (mauve)','#534064','#E6DFEB',7.05,4.5],
+['Avatars','Monogram OT (sand)','#5E4C22','#EDE4CF',6.55,4.5],
+['Avatars','Monogram CB (stone)','#4A463F','#E4E2DD',7.24,4.5]
+];
+const D = [
+['#ECEFF3','#262E38',11.9],['#BCC4CE','#313842',6.72],['#F3C27A','#3A2D18',8.17],
+['#ECEFF3','#1D242C',13.58],['#BCC4CE','#1D242C',8.89],['#A3ACB8','#1D242C',6.82],
+['#ECEFF3','#2F363D',10.61],['#BCC4CE','#2F363D',6.95],['#A3ACB8','#2F363D',5.33],
+['#ECEFF3','#202730',13.06],['#BCC4CE','#202730',8.55],['#A3ACB8','#202730',6.56],
+['#ECEFF3','#2A323C',11.24],
+['#08170F','#3FB37E',6.98],['#ECEFF3','#202730',13.06],['#BCC4CE','#202730',8.55],['#ECEFF3','#1D242C',13.58],
+['#15191F','#ECEFF3',15.29],['#15191F','#D4D7DB',12.21],['#ECEFF3','#2F363D',10.61],['#08170F','#3FB37E',6.98],
+['#08170F','#3FB37E',6.98],['#15191F','#ECEFF3',15.29],['#A3ACB8','#1D242C',6.82],
+['#08170F','#3FB37E',6.98],['#3FB37E','#1D242C',5.94],['#F3C27A','#3A2D18',8.17],['#B98432','#1D242C',4.78],
+['#A9C6F2','#1F2D42',7.97],['#6F95CF','#1D242C',5.13],['#BCC4CE','#1D242C',8.89],['#A3ACB8','#1D242C',6.82],['#ECEFF3','#1D242C',13.58],
+['#FFB4A9','#41201C',8.53],['#ECEFF3','#41201C',12.57],['#1E1E1E','#E0E3E8',12.96],
+['#F2DCD0','#4A3830',8.38],['#D9E4EF','#33404D',8.22],['#E6DAF0','#3F3549',8.61],['#EFE5CA','#46402F',8.22],['#E4E1DA','#3B3A37',8.71]
+];
+const SAMPLE = 'display: inline-grid; place-items: center; flex: none; width: 40px; height: 28px; border-radius: 8px; font-size: 14px; font-weight: 600; box-shadow: inset 0 0 0 1px rgba(30,42,58,.12); ';
+class Component extends DCLogic {
+  renderVals() {
+    const rows = L.map(function (l, i) {
+      const d = D[i];
+      return {
+        g: l[0], pair: l[1],
+        lfg: l[2], lbg: l[3], lr: l[4].toFixed(2) + ':1',
+        dfg: d[0], dbg: d[1], dr: d[2].toFixed(2) + ':1',
+        need: l[5] + ':1',
+        lSample: SAMPLE + 'color: ' + l[2] + '; background: ' + l[3],
+        dSample: SAMPLE + 'color: ' + d[0] + '; background: ' + d[1],
+        rowStyle: 'display: grid; grid-template-columns: 136px minmax(0, 1fr) 248px 248px 72px; gap: 16px; align-items: center; padding: 8px 24px; border-top: 1px solid #E6E9ED' + (i % 2 ? '; background: #FAFBFC' : '')
+      };
+    });
+    return { rows: rows };
+  }
+}
+</script>
+</body>
+</html>

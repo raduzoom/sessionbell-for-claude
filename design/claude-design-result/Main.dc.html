@@ -1,0 +1,883 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sessions needing attention</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="sn.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="{{rootCls}}" ref="{{setRoot}}" style="width: {{w}}px; height: {{h}}px">
+
+  <nav class="rail glass" aria-label="Sidebar">
+    <div class="rail-projects" role="toolbar" aria-label="Projects" aria-orientation="vertical" onKeyDown="{{pillKey}}">
+      <sc-for list="{{railItems}}" as="p" hint-placeholder-count="7">
+        <button class="{{p.cls}}" tabIndex="{{p.tab}}" aria-pressed="{{p.pressed}}" aria-label="{{p.aria}}" onClick="{{p.pick}}">
+          <span class="{{p.avCls}}" aria-hidden="true">{{p.mono}}</span>
+          <sc-if value="{{p.hasBadge}}" hint-placeholder-val="{{true}}"><span class="{{p.badgeCls}}" aria-hidden="true">{{p.badge}}</span></sc-if>
+          <span class="rail-tip" aria-hidden="true">{{p.tip}}</span>
+        </button>
+      </sc-for>
+    </div>
+    <div class="theme-seg" role="group" aria-label="Theme">
+      <button class="{{lightBtnCls}}" aria-label="Light theme" aria-pressed="{{isLight}}" onClick="{{setLight}}">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+      </button>
+      <button class="{{darkBtnCls}}" aria-label="Dark theme" aria-pressed="{{isDark}}" onClick="{{setDark}}">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg>
+      </button>
+    </div>
+  </nav>
+
+  <div class="col">
+    <header class="hdr">
+      <h1>Sessions needing attention</h1>
+      <button class="icon-btn hdr-theme" aria-label="{{themeToggleLabel}}" onClick="{{toggleTheme}}">
+        <sc-if value="{{isLight}}" hint-placeholder-val="{{true}}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg>
+        </sc-if>
+        <sc-if value="{{isDark}}" hint-placeholder-val="{{false}}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+        </sc-if>
+      </button>
+      <div class="hdr-right">
+        <sc-if value="{{isLate}}" hint-placeholder-val="{{false}}">
+          <span class="status late" role="status">
+            <svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17v.5"></path></svg>
+            Scanner hasn't run for 9m
+          </span>
+        </sc-if>
+        <sc-if value="{{isOk}}" hint-placeholder-val="{{true}}">
+          <span class="status" role="status"><span class="dot" aria-hidden="true"></span>Scanned just now · 120 session files</span>
+        </sc-if>
+        <sc-if value="{{hasErr}}" hint-placeholder-val="{{false}}">
+          <span class="status" role="status">Last scan just now</span>
+        </sc-if>
+      </div>
+    </header>
+
+    <sc-if value="{{hasErr}}" hint-placeholder-val="{{false}}">
+      <div class="banner" role="alert">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.5"></path></svg>
+        <div>
+          <h2>Can't show sessions right now</h2>
+          <p>{{errText}}</p>
+        </div>
+      </div>
+    </sc-if>
+
+    <div class="panes">
+      <section class="list glass" aria-label="Sessions">
+        <div class="list-head">
+          <h2>{{headName}}</h2>
+          <sc-if value="{{headSoon}}" hint-placeholder-val="{{false}}"><span class="soon-tag">coming soon</span></sc-if>
+        </div>
+        <div class="pills top" role="toolbar" aria-label="Projects" onKeyDown="{{pillKey}}">
+          <sc-for list="{{pills}}" as="p" hint-placeholder-count="6">
+            <button class="{{p.cls}}" tabIndex="{{p.tab}}" aria-pressed="{{p.pressed}}" aria-label="{{p.aria}}" onClick="{{p.pick}}">
+              <span>{{p.label}}</span>
+              <sc-if value="{{p.showCount}}" hint-placeholder-val="{{true}}"><span class="pc">{{p.count}}</span></sc-if>
+              <sc-if value="{{p.showAsked}}" hint-placeholder-val="{{false}}"><span class="pa">{{p.askedLabel}}</span></sc-if>
+              <sc-if value="{{p.soon}}" hint-placeholder-val="{{false}}"><span class="soon-tag">soon</span></sc-if>
+            </button>
+          </sc-for>
+        </div>
+        <sc-if value="{{hasSubPills}}" hint-placeholder-val="{{false}}">
+          <div class="pills sub" role="toolbar" aria-label="{{subAria}}" onKeyDown="{{pillKey}}">
+            <sc-for list="{{subPills}}" as="p" hint-placeholder-count="4">
+              <button class="{{p.cls}}" tabIndex="{{p.tab}}" aria-pressed="{{p.pressed}}" aria-label="{{p.aria}}" onClick="{{p.pick}}">
+                <span>{{p.label}}</span>
+                <sc-if value="{{p.showCount}}" hint-placeholder-val="{{true}}"><span class="pc">{{p.count}}</span></sc-if>
+                <sc-if value="{{p.showAsked}}" hint-placeholder-val="{{false}}"><span class="pa">{{p.askedLabel}}</span></sc-if>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <div class="scroll" ref="{{setScroll}}" onKeyDown="{{listKey}}">
+          <sc-if value="{{hasFilterNote}}" hint-placeholder-val="{{false}}">
+            <div class="fnote">
+              <span>{{filterNote}}</span>
+              <button class="btn btn-tertiary btn-sm" onClick="{{showAll}}">Show all projects</button>
+            </div>
+          </sc-if>
+
+          <sc-for list="{{items}}" as="it" hint-placeholder-count="8">
+
+            <sc-if value="{{it.isSec}}" hint-placeholder-val="{{false}}">
+              <h2 class="sec" data-anchor="{{it.anchor}}">
+                <span>{{it.label}}</span>
+                <sc-if value="{{it.showCount}}" hint-placeholder-val="{{true}}"><span class="count">{{it.count}}</span></sc-if>
+                <sc-if value="{{it.showAsked}}" hint-placeholder-val="{{false}}"><span class="pa">{{it.askedLabel}}</span></sc-if>
+              </h2>
+            </sc-if>
+
+            <sc-if value="{{it.isEmpty}}" hint-placeholder-val="{{false}}">
+              <div class="empty" role="status">
+                <span class="em-icon" aria-hidden="true">
+                  <svg class="ic ic-lg" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+                </span>
+                <h3>Nothing needs you right now</h3>
+                <p>Checked just now</p>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{it.isErrNote}}" hint-placeholder-val="{{false}}">
+              <p class="errnote">No counts while the scan is failing. The list fills in again on the first good scan; the page checks every 30 seconds.</p>
+            </sc-if>
+
+            <sc-if value="{{it.isRow}}" hint-placeholder-val="{{true}}">
+              <div class="{{it.wrapCls}}">
+              <button class="{{it.cls}}" data-sid="{{it.sid}}" tabIndex="{{it.tab}}" aria-current="{{it.current}}" onClick="{{it.pick}}">
+                <span class="{{it.avCls}}" aria-hidden="true">{{it.mono}}</span>
+                <span class="row-main">
+                  <span class="row-top">
+                    <span class="row-title">{{it.title}}</span>
+                    <span class="row-time">{{it.time}}</span>
+                  </span>
+                  <span class="row-bottom">
+                    <span class="{{it.needsCls}}">{{it.needs}}</span>
+                    <span class="{{it.badgeCls}}">
+                      <sc-if value="{{it.isAsked}}" hint-placeholder-val="{{true}}"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 21l1.9-5.6A8.5 8.5 0 1 1 21 11.5z"></path></svg></sc-if>
+                      <sc-if value="{{it.isStuck}}" hint-placeholder-val="{{false}}"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10M7 21h10M8 3v3l4 6 4-6V3M8 21v-3l4-6 4 6v3"></path></svg></sc-if>
+                      <sc-if value="{{it.isBlocked}}" hint-placeholder-val="{{false}}"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M10 9v6M14 9v6"></path></svg></sc-if>
+                      <sc-if value="{{it.isReview}}" hint-placeholder-val="{{false}}"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+                      <sc-if value="{{it.isUnread}}" hint-placeholder-val="{{false}}"><span class="udot" aria-hidden="true"></span></sc-if>
+                      {{it.badgeLabel}}
+                    </span>
+                  </span>
+                </span>
+              </button>
+              <sc-if value="{{it.showMore}}" hint-placeholder-val="{{false}}">
+                <div class="more">
+                  <button class="btn btn-tertiary btn-sm more-btn" aria-haspopup="menu" aria-expanded="{{it.menuExpanded}}" aria-label="{{it.moreAria}}" onClick="{{it.toggleMenu}}">
+                    More actions
+                    <svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+                  </button>
+                  <sc-if value="{{it.menuOpen}}" hint-placeholder-val="{{false}}">
+                    <div class="menu row-menu glass-strong" role="menu" aria-label="{{it.moreAria}}" onKeyDown="{{menuKey}}">
+                      <button class="menu-item" role="menuitem" onClick="{{it.rowSnooze}}">
+                        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                        Snooze 1 hour (back at 15:42)
+                      </button>
+                      <button class="menu-item" role="menuitem" onClick="{{it.rowTomorrow}}">
+                        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 5v4M5.6 9.6l1.4 1.4M18.4 9.6L17 11"></path></svg>
+                        Snooze until tomorrow 9:00
+                      </button>
+                      <button class="menu-item" role="menuitem" onClick="{{it.rowDismiss}}">
+                        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0 1 12 6c5 0 9 6 9 6a16 16 0 0 1-2.6 3.2M6.6 6.6A16 16 0 0 0 3 12s4 6 9 6a9 9 0 0 0 4.4-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg>
+                        Dismiss
+                      </button>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{it.isSched}}" hint-placeholder-val="{{false}}">
+              <div class="{{it.wrapCls}}">
+              <button class="{{it.cls}}" data-sid="{{it.sid}}" tabIndex="{{it.tab}}" aria-current="{{it.current}}" onClick="{{it.pick}}">
+                <span class="sched-ic" aria-hidden="true">
+                  <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                </span>
+                <span class="sched-line"><b>{{it.title}}</b> · {{it.needs}}</span>
+                <span class="sched-side">
+                  <span class="row-time">{{it.time}}</span>
+                  <span class="{{it.badgeCls}}">
+                    <sc-if value="{{it.isAsked}}" hint-placeholder-val="{{false}}"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 21l1.9-5.6A8.5 8.5 0 1 1 21 11.5z"></path></svg></sc-if>
+                    <sc-if value="{{it.isStuck}}" hint-placeholder-val="{{false}}"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10M7 21h10M8 3v3l4 6 4-6V3M8 21v-3l4-6 4 6v3"></path></svg></sc-if>
+                    <sc-if value="{{it.isBlocked}}" hint-placeholder-val="{{true}}"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M10 9v6M14 9v6"></path></svg></sc-if>
+                    {{it.badgeLabel}}
+                  </span>
+                </span>
+              </button>
+              <sc-if value="{{it.showMore}}" hint-placeholder-val="{{false}}">
+                <div class="more">
+                  <button class="btn btn-tertiary btn-sm more-btn" aria-haspopup="menu" aria-expanded="{{it.menuExpanded}}" aria-label="{{it.moreAria}}" onClick="{{it.toggleMenu}}">
+                    More actions
+                    <svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+                  </button>
+                  <sc-if value="{{it.menuOpen}}" hint-placeholder-val="{{false}}">
+                    <div class="menu row-menu glass-strong" role="menu" aria-label="{{it.moreAria}}" onKeyDown="{{menuKey}}">
+                      <button class="menu-item" role="menuitem" onClick="{{it.rowSnooze}}">
+                        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                        Snooze 1 hour (back at 15:42)
+                      </button>
+                      <button class="menu-item" role="menuitem" onClick="{{it.rowTomorrow}}">
+                        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 5v4M5.6 9.6l1.4 1.4M18.4 9.6L17 11"></path></svg>
+                        Snooze until tomorrow 9:00
+                      </button>
+                      <button class="menu-item" role="menuitem" onClick="{{it.rowDismiss}}">
+                        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0 1 12 6c5 0 9 6 9 6a16 16 0 0 1-2.6 3.2M6.6 6.6A16 16 0 0 0 3 12s4 6 9 6a9 9 0 0 0 4.4-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg>
+                        Dismiss
+                      </button>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{it.isArch}}" hint-placeholder-val="{{false}}">
+              <button class="{{it.cls}}" data-anchor="{{it.anchor}}" aria-expanded="{{it.expanded}}" onClick="{{it.toggle}}">
+                <span class="arch-ic" aria-hidden="true">
+                  <sc-if value="{{it.isStaleIcon}}" hint-placeholder-val="{{true}}">
+                    <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1.5"></rect><path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M10 13h4"></path></svg>
+                  </sc-if>
+                  <sc-if value="{{it.isHiddenIcon}}" hint-placeholder-val="{{false}}">
+                    <svg class="ic" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0 1 12 6c5 0 9 6 9 6a16 16 0 0 1-2.6 3.2M6.6 6.6A16 16 0 0 0 3 12s4 6 9 6a9 9 0 0 0 4.4-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg>
+                  </sc-if>
+                </span>
+                <span class="arch-label">{{it.label}}</span>
+                <span class="arch-count">{{it.count}}</span>
+                <svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+              </button>
+            </sc-if>
+
+            <sc-if value="{{it.isHiddenRow}}" hint-placeholder-val="{{false}}">
+              <div class="hrow">
+                <span class="{{it.avCls}}" aria-hidden="true">{{it.mono}}</span>
+                <span class="row-main">
+                  <span class="row-title">{{it.title}}</span>
+                  <span class="hreason">
+                    <sc-if value="{{it.isSnoozed}}" hint-placeholder-val="{{true}}"><svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></sc-if>
+                    <sc-if value="{{it.isDismissed}}" hint-placeholder-val="{{false}}"><svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0 1 12 6c5 0 9 6 9 6a16 16 0 0 1-2.6 3.2M6.6 6.6A16 16 0 0 0 3 12s4 6 9 6a9 9 0 0 0 4.4-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg></sc-if>
+                    {{it.reason}}
+                  </span>
+                </span>
+                <button class="btn btn-secondary btn-sm" aria-label="{{it.showAria}}" onClick="{{it.showAgain}}">Show again</button>
+              </div>
+            </sc-if>
+
+          </sc-for>
+        </div>
+      </section>
+
+      <div class="scrim" aria-hidden="true"></div>
+
+      <section class="detail glass-strong" aria-label="Selected session" role="{{detailRole}}" aria-modal="{{detailModal}}" onKeyDown="{{detailKey}}">
+        <sc-if value="{{hasSel}}" hint-placeholder-val="{{true}}">
+          <div class="d-head">
+            <button class="icon-btn plain only-phone" aria-label="Back to sessions" onClick="{{backToList}}">
+              <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"></path></svg>
+            </button>
+            <span class="{{d.avCls}}" aria-hidden="true">{{d.mono}}</span>
+            <div class="d-who">
+              <span class="d-proj">{{d.project}}</span>
+              <sc-if value="{{d.hasSub}}" hint-placeholder-val="{{true}}"><span class="d-sub">{{d.sub}}</span></sc-if>
+            </div>
+            <span class="d-wait">
+              <svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+              {{d.waiting}}
+            </span>
+            <button class="icon-btn plain only-half" aria-label="Close session" onClick="{{closeSheet}}">
+              <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+            </button>
+          </div>
+
+          <div class="d-body">
+            <h2 class="d-title">{{d.title}}</h2>
+            <div class="d-meta">
+              <span class="{{d.badgeCls}}">
+                <sc-if value="{{d.isAsked}}" hint-placeholder-val="{{true}}"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 21l1.9-5.6A8.5 8.5 0 1 1 21 11.5z"></path></svg></sc-if>
+                <sc-if value="{{d.isStuck}}" hint-placeholder-val="{{false}}"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10M7 21h10M8 3v3l4 6 4-6V3M8 21v-3l4-6 4 6v3"></path></svg></sc-if>
+                <sc-if value="{{d.isBlocked}}" hint-placeholder-val="{{false}}"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M10 9v6M14 9v6"></path></svg></sc-if>
+                <sc-if value="{{d.isReview}}" hint-placeholder-val="{{false}}"><svg class="ic ic-xs" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+                <sc-if value="{{d.isUnread}}" hint-placeholder-val="{{false}}"><span class="udot" aria-hidden="true"></span></sc-if>
+                {{d.badgeLabel}}
+              </span>
+              <span class="d-repo">
+                <svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                {{d.repo}}
+              </span>
+            </div>
+            <div class="bubble-wrap">
+              <span class="bubble-label">{{d.bubbleLabel}}</span>
+              <p class="{{d.bubbleCls}}">{{d.bubble}}</p>
+            </div>
+          </div>
+
+          <div class="actions">
+            <p class="hint">Opens it in the Claude app. It stays on this list until its state changes.</p>
+            <div class="act-btns">
+              <button class="btn btn-tertiary" onClick="{{dismiss}}">Dismiss</button>
+              <div class="snz">
+                <button class="btn btn-secondary" aria-haspopup="menu" aria-expanded="{{snoozeExpanded}}" onClick="{{toggleSnooze}}">
+                  Snooze
+                  <svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+                </button>
+                <sc-if value="{{snoozeOpen}}" hint-placeholder-val="{{false}}">
+                  <div class="menu glass-strong" role="menu" aria-label="Snooze" onKeyDown="{{menuKey}}">
+                    <button class="menu-item" role="menuitem" onClick="{{snooze1h}}">
+                      <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                      Snooze 1 hour (back at 15:42)
+                    </button>
+                    <button class="menu-item" role="menuitem" onClick="{{snoozeTomorrow}}">
+                      <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 5v4M5.6 9.6l1.4 1.4M18.4 9.6L17 11"></path></svg>
+                      Snooze until tomorrow 9:00
+                    </button>
+                  </div>
+                </sc-if>
+              </div>
+              <sc-if value="{{notOpening}}" hint-placeholder-val="{{true}}">
+                <button class="btn btn-primary" onClick="{{open}}">
+                  Open session
+                  <svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"></path></svg>
+                </button>
+              </sc-if>
+              <sc-if value="{{opening}}" hint-placeholder-val="{{false}}">
+                <button class="btn btn-primary is-loading" aria-busy="true" disabled="{{true}}">
+                  <svg class="ic ic-sm spin" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9"></path></svg>
+                  Opening…
+                </button>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{noSel}}" hint-placeholder-val="{{false}}">
+          <div class="d-empty" role="status">
+            <span class="em-icon" aria-hidden="true">
+              <sc-if value="{{hasErr}}" hint-placeholder-val="{{false}}"><svg class="ic ic-lg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.5"></path></svg></sc-if>
+              <sc-if value="{{noErr}}" hint-placeholder-val="{{true}}"><svg class="ic ic-lg" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+            </span>
+            <h2>{{emptyTitle}}</h2>
+            <p>{{emptyText}}</p>
+          </div>
+        </sc-if>
+      </section>
+    </div>
+  </div>
+
+  <sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
+    <div class="toast" role="status" aria-live="polite">
+      <span>{{toastText}}</span>
+      <button class="toast-btn" onClick="{{undo}}">Undo</button>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"layout":{"editor":"enum","options":["desktop","half","phone"],"default":"desktop"},"fixture":{"editor":"enum","options":["normal","empty","late","busy","error-format","error-projects"],"default":"normal"},"solid":{"editor":"boolean","default":false},"h":{"editor":"int","default":880,"min":560,"max":2000},"project":{"editor":null},"sub":{"editor":null},"selected":{"editor":null},"phoneView":{"editor":null},"sheet":{"editor":null},"snooze":{"editor":null},"toast":{"editor":null},"expand":{"editor":null},"scrollTo":{"editor":null},"$preview":{"width":1280,"height":880}}'>
+const STUCK_TEXT = 'Turn started but never finished: may be a permission prompt or a slow tool.';
+const PROJECTS = [
+  { id: 'client-a', name: 'Client A', mono: 'CA', av: 'clay', children: [ { id: 'client-a/us', short: 'US' }, { id: 'client-a/canada', short: 'Canada' } ] },
+  { id: 'client-b', name: 'Client B', mono: 'CB', av: 'stone', soon: true, children: [] },
+  { id: 'client-c', name: 'Client C', mono: 'CC', av: 'stone', soon: true, children: [] },
+  { id: 'tools', name: 'Internal Tools', mono: 'IT', av: 'slate', children: [] },
+  { id: 'kb', name: 'Knowledge Base', mono: 'KB', av: 'mauve', children: [] },
+  { id: 'other', name: 'Other', mono: 'OT', av: 'sand', children: [] }
+];
+const SUBNAME = { 'client-a/us': 'US', 'client-a/canada': 'Canada' };
+function C(id, title, state, project, sub, repo, needs, ms, extra) {
+  return Object.assign({ id: 'local_example-' + id, title: title, state: state, project: project, sub: sub, repo: repo, needs: needs, ms: ms }, extra || {});
+}
+const MAIN = [
+  C('00', 'TICKET-240 Web chat: foreign address', 'asked', 'client-a', 'client-a/us', 'client-a-bot (worktree)', 'Run the regression check now, or ship as is?', 480000),
+  C('01', 'TICKET-231 Lead routing: local test calls', 'asked', 'client-a', 'client-a/canada', 'client-a-bot-canada', 'Will you make the two test calls now? I need one from a local number and one from abroad, then the call IDs from the log so I can compare the two routing paths.', 1500000),
+  C('02', 'Release checklist generator: pull merged changes from the last two weeks', 'asked', 'tools', null, 'internal-tools', 'Use the release branch or main as the source?', 2400000),
+  C('03', 'TICKET-218 Out-of-coverage reply', 'asked', 'client-a', 'client-a/canada', 'client-a-bot-canada', "Send me the call ID once you've made the call?", 3600000),
+  C('04', 'TICKET-207 Contact text update', 'stuck', 'client-a', 'client-a/canada', 'client-a-bot-canada', '', 79200000),
+  C('05', 'Test dashboard port conflict', 'blocked', 'tools', null, 'internal-tools', 'Stop the old dashboard on port 8110, then tell me to restart it', 10800000),
+  C('06', 'Latest config changes', 'blocked', 'kb', null, 'knowledge-base', 'Pick a fix: drop the transfer step (my pick) or reorder the steps', 172800000)
+];
+const BUSY = [
+  C('57', 'Menu bar icon size', 'asked', 'other', null, 'scheduler-app', 'Use the 16 pt or the 18 pt icon?', 1380000),
+  C('56', 'Backup script schedule', 'asked', 'other', null, 'scratch', 'Run nightly at 02:00, or hourly?', 1200000),
+  C('55', 'Onboarding page order', 'asked', 'kb', null, 'knowledge-base', "Move 'First week' above 'Accounts'?", 1020000),
+  C('54', 'Log viewer: colour by level', 'asked', 'tools', null, 'internal-tools', 'Keep warnings amber, or match the error red?', 840000),
+  C('53', 'TICKET-236 Booking window', 'asked', 'client-a', 'client-a/canada', 'client-a-bot-canada', 'Allow same-day bookings, or next day only?', 660000),
+  C('52', 'TICKET-233 French greeting', 'asked', 'client-a', 'client-a/canada', 'client-a-bot-canada', 'Is the new French greeting text final?', 480000),
+  C('51', 'TICKET-245 Retry on dropped calls', 'asked', 'client-a', 'client-a/us', 'client-a-bot', 'Retry once or twice before handing off?', 300000),
+  C('50', 'TICKET-244 Holiday hours message', 'asked', 'client-a', 'client-a/us', 'client-a-bot', 'Use the short or the long greeting?', 120000)
+];
+const SCHED = [
+  C('07', 'Scheduled task: chat-mention-ping', 'blocked', 'other', null, 'chat-ping', 'Sign the chat connector back in with /mcp', 240000)
+];
+const STALE = [
+  C('08', 'Multi-phase ticket planning', 'stuck', 'client-a', 'client-a/canada', 'client-a-bot-canada', '', 1036800000),
+  C('09', 'Country analytics from caller location', 'blocked', 'client-a', 'client-a/canada', 'client-a-bot-canada', 'Confirm the reporting tenant before I post the request', 1728000000),
+  C('10', 'Examples showcase phase 0', 'blocked', 'kb', null, 'knowledge-base', 'Commit and push, or review first?', 3196800000),
+  C('11', 'Claude settings: permissions default', 'blocked', 'other', null, 'scratch', "Check the status line for auto mode; press Shift+Tab if it's off", 3801600000)
+];
+const QUIET = [
+  C('12', 'TICKET-241 Office number fallback', 'review_ready', 'client-a', 'client-a/canada', 'client-a-bot-canada', 'Down to the last run: regression check', 240000),
+  C('13', 'Voice handoff with foreign address', 'review_ready', 'client-a', 'client-a/us', 'client-a-bot', 'Replied on both review threads; open gaps go into the drafts', 1123200000),
+  C('14', 'Flow map: path shown by default', 'unread', 'tools', null, 'internal-tools', "Bordered 'Read again' button added; checked at 1500 px", 432000000),
+  C('15', 'TICKET-190 Ticket inquiry', 'unread', 'client-a', 'client-a/canada', 'client-a-bot-canada', 'Integration logs checked; spec updated, not committed', 691200000),
+  C('16', 'Release walkthrough docs', 'unread', 'kb', null, 'knowledge-base', 'Docs updated; deploy table fixed', 777600000),
+  C('17', 'Mac scheduler app', 'unread', 'other', null, 'scheduler-app', 'Login item registered; restart to verify', 604800000)
+];
+const HIDDEN = [
+  C('18', 'Glossary cleanup', 'asked', 'kb', null, 'knowledge-base', "Merge the two 'handoff' entries into one?", 7200000, { hiddenBy: 'snooze' }),
+  C('19', 'Font licence check', 'blocked', 'other', null, 'scratch', 'Buy the desktop licence, or switch to the free family?', 259200000, { hiddenBy: 'dismiss' })
+];
+const ERRORS = {
+  'error-format': "Can't read session status, format may have changed (120 of 120 files unreadable).",
+  'error-projects': 'projects.json: the rule for ~/work/client-d-bot names an unknown project "client-d".'
+};
+const RANK = { asked: 0, stuck: 1, blocked: 2, review_ready: 3, unread: 4 };
+const LABEL = { asked: 'Asked', stuck: 'Stuck', blocked: 'Blocked', review_ready: 'Review', unread: 'Unread' };
+const BKEY = { asked: 'asked', stuck: 'stuck', blocked: 'blocked', review_ready: 'review', unread: 'unread' };
+const BUBBLE_LABEL = { asked: 'The session asked', stuck: 'Status', blocked: 'Needs from you', review_ready: 'Summary', unread: 'Summary' };
+const TOASTS = { snooze: 'Snoozed until 15:42', tomorrow: 'Snoozed until tomorrow 9:00', dismiss: 'Dismissed until it changes' };
+const PMAP = {};
+PROJECTS.forEach(function (p) { PMAP[p.id] = p; });
+
+function fmt(ms) {
+  const m = Math.round(ms / 60000);
+  if (m < 60) return m + 'm';
+  const h = Math.round(ms / 3600000);
+  if (h < 24) return h + 'h';
+  return Math.round(ms / 86400000) + 'd';
+}
+function sortCards(list) {
+  return list.slice().sort(function (a, b) { return (RANK[a.state] - RANK[b.state]) || (a.ms - b.ms); });
+}
+function yes(v) { return v === true || v === 'yes' || v === 'true' || v === 'open'; }
+function askedText(n) { return (n > 9 ? '9+' : String(n)) + ' asked'; }
+
+class Component extends DCLogic {
+  g(k, d) {
+    const s = this.state || {};
+    if (s[k] !== undefined) return s[k];
+    const p = this.props[k];
+    return (p === undefined || p === null || p === '') ? d : p;
+  }
+
+  componentDidMount() { this.scrollToAnchor(0); }
+  componentDidUpdate() { this.scrollToAnchor(0); }
+  // Static boards can ask the list to start at a section; retry until the list has rendered.
+  scrollToAnchor(tries) {
+    const to = this.props.scrollTo;
+    if (!to || this._scrolled || tries > 20) return;
+    const el = this._scroll && this._scroll.querySelector('[data-anchor="' + to + '"]');
+    if (el && this._scroll.scrollHeight > this._scroll.clientHeight) {
+      this._scroll.scrollTop = Math.max(0, el.offsetTop - 8);
+      this._scrolled = true;
+      return;
+    }
+    clearTimeout(this._st);
+    this._st = setTimeout(() => this.scrollToAnchor(tries + 1), 150);
+  }
+  componentWillUnmount() { clearTimeout(this._tt); clearTimeout(this._ot); clearTimeout(this._st); }
+
+  focusRow(id) {
+    const el = this._scroll && this._scroll.querySelector('[data-sid="' + id + '"]');
+    if (el) el.focus();
+  }
+
+  focusIn(selector) {
+    const el = this._root && this._root.querySelector(selector);
+    if (el) el.focus();
+  }
+
+  // Menu button pattern: arrows, Home and End move between items; Escape closes and returns focus; Tab closes.
+  menuKey(e) {
+    const items = Array.prototype.slice.call(e.currentTarget.querySelectorAll('[role="menuitem"]'));
+    const n = items.length;
+    const i = items.indexOf(document.activeElement);
+    let j = null;
+    if (e.key === 'ArrowDown') j = (i + 1) % n;
+    else if (e.key === 'ArrowUp') j = (i - 1 + n) % n;
+    else if (e.key === 'Home') j = 0;
+    else if (e.key === 'End') j = n - 1;
+    else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      const trigger = e.currentTarget.parentElement && e.currentTarget.parentElement.querySelector('[aria-haspopup]');
+      this.setState({ snooze: 'closed', rowMenu: '' }, () => { if (trigger) trigger.focus(); });
+      return;
+    } else if (e.key === 'Tab') {
+      this.setState({ snooze: 'closed', rowMenu: '' });
+      return;
+    }
+    if (j !== null) {
+      e.preventDefault();
+      e.stopPropagation();
+      items[j].focus();
+    }
+  }
+
+  // The 800 slide-over is modal: Tab and Shift+Tab cycle inside it.
+  // Escape closes it (or the phone session view) and returns focus to the row.
+  detailKey(e) {
+    if (e.defaultPrevented) return;
+    const lay = this.props.layout || 'desktop';
+    const id = this.view && this.view.selId;
+    if (e.key === 'Tab' && lay === 'half' && yes(this.g('sheet', ''))) {
+      const f = Array.prototype.slice.call(e.currentTarget.querySelectorAll('button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'))
+        .filter((el) => el.getClientRects().length > 0);
+      if (!f.length) return;
+      const first = f[0];
+      const last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      return;
+    }
+    if (e.key !== 'Escape') return;
+    if (lay === 'half' && yes(this.g('sheet', ''))) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.setState({ sheet: 'closed', snooze: 'closed' }, () => this.focusRow(id));
+    } else if (lay === 'phone' && this.g('phoneView', 'list') === 'session') {
+      e.preventDefault();
+      e.stopPropagation();
+      this.setState({ phoneView: 'list', snooze: 'closed' }, () => this.focusRow(id));
+    }
+  }
+
+  pick(id) {
+    const lay = this.props.layout || 'desktop';
+    const s = { selected: id, snooze: 'closed', rowMenu: '' };
+    if (lay === 'phone') s.phoneView = 'session';
+    if (lay === 'half') s.sheet = 'open';
+    this.setState(s, () => {
+      // Opening the slide-over (800) or the session view (phone) moves focus into it.
+      if (lay === 'half') this.focusIn('.detail .btn-primary');
+      if (lay === 'phone') this.focusIn('.detail .only-phone');
+    });
+  }
+
+  hideSelected(kind) {
+    if (this.view) this.hideId(this.view.selId, kind);
+  }
+
+  hideId(id, kind) {
+    const v = this.view;
+    if (!v || !id) return;
+    const ids = v.navIds;
+    const i = ids.indexOf(id);
+    const next = ids[i + 1] || ids[i - 1] || null;
+    const hid = Object.assign({}, v.hid);
+    hid[id] = kind === 'dismiss' ? 'dismiss' : 'snooze';
+    const lay = this.props.layout || 'desktop';
+    const s = { hid: hid, selected: next, snooze: 'closed', rowMenu: '', toast: kind, lastHidden: id };
+    if (lay === 'phone') s.phoneView = 'list';
+    if (lay === 'half') s.sheet = 'closed';
+    this.setState(s, () => { if (next && lay !== 'phone') this.focusRow(next); });
+    clearTimeout(this._tt);
+    this._tt = setTimeout(() => this.setState({ toast: '' }), 8000);
+  }
+
+  renderVals() {
+    const lay = this.props.layout || 'desktop';
+    const fx = this.props.fixture || 'normal';
+    const theme = this.g('theme', 'light');
+    const err = ERRORS[fx] || null;
+    const sheetOpen = lay === 'half' && yes(this.g('sheet', ''));
+
+    let main = MAIN, sched = SCHED, stale = STALE, quiet = QUIET, hiddenFx = HIDDEN;
+    if (fx === 'empty') { main = []; sched = []; }
+    if (fx === 'busy') main = BUSY.concat(MAIN);
+    if (err) { main = []; sched = []; stale = []; quiet = []; hiddenFx = []; }
+
+    const toastProp = this.props.toast || '';
+    let defaultHid = {};
+    if (toastProp && main.length) defaultHid[sortCards(main)[0].id] = toastProp === 'dismiss' ? 'dismiss' : 'snooze';
+    const hid = (this.state && this.state.hid) || defaultHid;
+    const unhid = (this.state && this.state.unhid) || {};
+
+    const fxHiddenVisible = hiddenFx.filter((c) => !unhid[c.id]);
+    const restored = hiddenFx.filter((c) => unhid[c.id]);
+    const allMain = main.concat(restored);
+    const vis = (c) => !hid[c.id];
+
+    const project = this.g('project', 'all');
+    const sub = this.g('sub', 'all');
+    const match = (c) => {
+      if (project === 'all') return true;
+      if (c.project !== project) return false;
+      if (sub === 'all') return true;
+      if (sub === 'general') return !c.sub;
+      return c.sub === sub;
+    };
+
+    const needsAll = allMain.filter(vis).concat(sched.filter(vis));
+    const needs = sortCards(allMain.filter(vis).filter(match));
+    const schedV = sortCards(sched.filter(vis).filter(match));
+    const staleV = sortCards(stale.filter(vis).filter(match));
+    const quietV = sortCards(quiet.filter(vis).filter(match));
+    const hiddenList = fxHiddenVisible.concat(
+      allMain.concat(sched, stale, quiet).filter((c) => hid[c.id]).map((c) => Object.assign({}, c, { hiddenBy: hid[c.id], untilNow: true }))
+    ).filter(match);
+
+    const expand = this.props.expand || '';
+    const expStale = this.g('expStale', expand.indexOf('stale') >= 0 || expand === 'all');
+    const expHidden = this.g('expHidden', expand.indexOf('hidden') >= 0 || expand === 'all');
+
+    const navCards = needs.concat(schedV, expStale ? staleV : [], quietV);
+    const navIds = navCards.map((c) => c.id);
+    let selId = this.g('selected', null);
+    if (!selId || navIds.indexOf(selId) < 0) selId = (needs[0] || schedV[0] || {}).id || null;
+    const sel = navCards.filter((c) => c.id === selId)[0] || null;
+
+    this.view = { selId: selId, navIds: navIds, hid: hid };
+
+    const badge = (st) => ({
+      badgeCls: 'badge b-' + BKEY[st], badgeLabel: LABEL[st],
+      isAsked: st === 'asked', isStuck: st === 'stuck', isBlocked: st === 'blocked', isReview: st === 'review_ready', isUnread: st === 'unread'
+    });
+
+    const items = [];
+    const firstId = navIds[0];
+    const rowMenu = this.g('rowMenu', '');
+    const row = (c, kind) => {
+      const isSel = c.id === selId;
+      // At 800 the selection only shows while the slide-over is open.
+      const showSel = isSel && (lay !== 'half' || sheetOpen);
+      const quietRow = kind === 'quiet';
+      const menuOpen = lay === 'half' && rowMenu === c.id;
+      return Object.assign({
+        isRow: kind !== 'sched', isSched: kind === 'sched',
+        sid: c.id,
+        wrapCls: 'row-wrap' + (showSel ? ' is-selected' : ''),
+        cls: 'row' + (kind === 'sched' ? ' sched' : '') + (quietRow ? ' quiet' : '') + (c.state === 'unread' ? ' is-unread' : '') + (showSel ? ' is-selected' : ''),
+        tab: (isSel || (!selId && c.id === firstId)) ? 0 : -1,
+        current: showSel ? 'true' : undefined,
+        showMore: lay === 'half', menuOpen: menuOpen, menuExpanded: menuOpen ? 'true' : 'false',
+        moreAria: 'More actions: ' + c.title,
+        toggleMenu: () => {
+          if (menuOpen) this.setState({ rowMenu: '' });
+          else this.setState({ rowMenu: c.id }, () => this.focusIn('.row-menu [role="menuitem"]'));
+        },
+        rowSnooze: () => this.hideId(c.id, 'snooze'),
+        rowTomorrow: () => this.hideId(c.id, 'tomorrow'),
+        rowDismiss: () => this.hideId(c.id, 'dismiss'),
+        mono: PMAP[c.project].mono, avCls: 'av av-' + PMAP[c.project].av,
+        title: c.title,
+        time: 'waiting ' + fmt(c.ms),
+        needs: c.state === 'stuck' ? STUCK_TEXT : c.needs,
+        needsCls: 'row-needs' + (c.state === 'stuck' ? ' note' : '') + (quietRow ? ' one' : ''),
+        pick: () => this.pick(c.id)
+      }, badge(c.state));
+    };
+
+    if (err) {
+      items.push({ isErrNote: true });
+    } else {
+      const askedN = needs.filter((c) => c.state === 'asked').length + schedV.filter((c) => c.state === 'asked').length;
+      const n = needs.length + schedV.length;
+      items.push({ isSec: true, anchor: 'needs', label: 'Needs you', count: n, showCount: n > 0, showAsked: askedN > 0, askedLabel: askedN + ' asked' });
+      if (!n) items.push({ isEmpty: true });
+      needs.forEach((c) => items.push(row(c, 'main')));
+      schedV.forEach((c) => items.push(row(c, 'sched')));
+      items.push({ isArch: true, anchor: 'stale', label: 'Stale: archive or revive?', count: staleV.length, isStaleIcon: true, expanded: expStale ? 'true' : 'false', cls: 'arch' + (expStale ? ' is-open' : ''), toggle: () => this.setState({ expStale: !expStale }) });
+      if (expStale) staleV.forEach((c) => items.push(row(c, 'stale')));
+      items.push({ isSec: true, anchor: 'quiet', label: 'Quieter', count: quietV.length, showCount: quietV.length > 0, showAsked: false });
+      quietV.forEach((c) => items.push(row(c, 'quiet')));
+      items.push({ isArch: true, anchor: 'hidden', label: 'Hidden', count: hiddenList.length, isHiddenIcon: true, expanded: expHidden ? 'true' : 'false', cls: 'arch' + (expHidden ? ' is-open' : ''), toggle: () => this.setState({ expHidden: !expHidden }) });
+      if (expHidden) hiddenList.forEach((c) => {
+        const snoozed = c.hiddenBy !== 'dismiss';
+        items.push({
+          isHiddenRow: true, sid: c.id, title: c.title,
+          mono: PMAP[c.project].mono, avCls: 'av av-' + PMAP[c.project].av,
+          isSnoozed: snoozed, isDismissed: !snoozed,
+          reason: snoozed ? 'Snoozed until 15:42' : 'Dismissed until it changes',
+          showAria: 'Show again: ' + c.title,
+          showAgain: () => {
+            const h2 = Object.assign({}, hid); delete h2[c.id];
+            const u2 = Object.assign({}, unhid);
+            if (HIDDEN.some((x) => x.id === c.id)) u2[c.id] = true;
+            this.setState({ hid: h2, unhid: u2 });
+          }
+        });
+      });
+    }
+
+    // project pills
+    const countFor = (fn) => {
+      const list = needsAll.filter(fn);
+      return { n: list.length, a: list.filter((c) => c.state === 'asked').length };
+    };
+    const tot = countFor(() => true);
+    const pillDefs = [{ id: 'all', label: 'All', n: tot.n, a: tot.a }].concat(PROJECTS.map((p) => {
+      const c = countFor((x) => x.project === p.id);
+      return { id: p.id, label: p.name, n: c.n, a: c.a, soon: !!p.soon };
+    }));
+    const pills = pillDefs.map((p) => {
+      const active = project === p.id;
+      return {
+        label: p.label,
+        cls: 'pill' + (active ? ' is-active' : '') + (p.soon ? ' soon' : ''),
+        tab: active ? 0 : -1, pressed: active ? 'true' : 'false',
+        aria: p.soon ? p.label + ', coming soon' : (err ? p.label : p.label + ', ' + p.n + ' need you' + (p.a ? ', ' + p.a + ' asked' : '')),
+        showCount: !err && !p.soon && p.n > 0, count: p.n,
+        showAsked: !err && !p.soon && p.a > 0, askedLabel: askedText(p.a),
+        soon: !!p.soon,
+        pick: () => this.setState({ project: p.id, sub: 'all', selected: null, snooze: 'closed' })
+      };
+    });
+
+    // Project rail (1280 and 800): badge = everything that needs you; green when any of it asked.
+    const railItems = pillDefs.map((p) => {
+      const active = project === p.id;
+      const pr = PMAP[p.id];
+      return {
+        cls: 'rail-item' + (active ? ' is-active' : '') + (p.soon ? ' soon' : ''),
+        tab: active ? 0 : -1, pressed: active ? 'true' : 'false',
+        aria: p.soon ? p.label + ', coming soon' : (err ? p.label : p.label + ', ' + p.n + ' need you' + (p.a ? ', ' + p.a + ' asked' : '')),
+        mono: pr ? pr.mono : 'All',
+        avCls: 'av rail-av ' + (!pr ? 'av-all' : (p.soon ? 'av-soon' : 'av-' + pr.av)),
+        hasBadge: !err && !p.soon && p.n > 0,
+        badge: p.n > 9 ? '9+' : String(p.n),
+        badgeCls: 'rail-badge' + (p.a > 0 ? ' has-asked' : ''),
+        tip: (pr ? p.label : 'All projects') + (p.soon ? ' · coming soon' : (err ? '' : ' · ' + p.n + ' need you' + (p.a ? ' · ' + p.a + ' asked' : ''))),
+        pick: () => this.setState({ project: p.id, sub: 'all', selected: null, snooze: 'closed', rowMenu: '' })
+      };
+    });
+
+    const proj = PMAP[project];
+    const hasSubPills = !!(proj && proj.children.length);
+    let subPills = [];
+    if (hasSubPills) {
+      const defs = [{ id: 'all', label: 'All' }].concat(proj.children.map((ch) => ({ id: ch.id, label: ch.short })), [{ id: 'general', label: 'General' }]);
+      subPills = defs.map((d) => {
+        const c = countFor((x) => x.project === proj.id && (d.id === 'all' || (d.id === 'general' ? !x.sub : x.sub === d.id)));
+        const active = sub === d.id;
+        return {
+          label: d.label, cls: 'pill' + (active ? ' is-active' : ''), tab: active ? 0 : -1, pressed: active ? 'true' : 'false',
+          aria: d.label + ', ' + c.n + ' need you' + (c.a ? ', ' + c.a + ' asked' : ''),
+          showCount: !err, count: c.n, showAsked: !err && c.a > 0, askedLabel: askedText(c.a),
+          pick: () => this.setState({ sub: d.id, selected: null, snooze: 'closed' })
+        };
+      });
+    }
+    const inView = needs.length + schedV.length;
+    const others = tot.n - inView;
+    const hasFilterNote = !err && project !== 'all' && others > 0;
+
+    // detail
+    let d = {};
+    if (sel) {
+      const p = PMAP[sel.project];
+      d = Object.assign({
+        title: sel.title, mono: p.mono, avCls: 'av av-' + p.av, project: p.name,
+        hasSub: !!sel.sub, sub: sel.sub ? SUBNAME[sel.sub] : '',
+        waiting: 'waiting ' + fmt(sel.ms), repo: sel.repo,
+        bubbleLabel: BUBBLE_LABEL[sel.state],
+        bubble: sel.state === 'stuck' ? STUCK_TEXT : sel.needs,
+        bubbleCls: 'bubble' + (sel.state === 'stuck' ? ' is-note' : '')
+      }, badge(sel.state));
+    }
+
+    const snoozeOpen = !!sel && yes(this.g('snooze', ''));
+    const opening = !!(this.state && this.state.opening);
+    const toastKind = this.g('toast', '');
+    const pv = lay === 'phone' ? this.g('phoneView', 'list') : '';
+
+    if (!this._setScroll) this._setScroll = (el) => { this._scroll = el; };
+    if (!this._setRoot) this._setRoot = (el) => { this._root = el; };
+
+    const solid = yes(this.props.solid);
+    const w = lay === 'phone' ? 375 : (lay === 'half' ? 800 : 1280);
+    const h = Number(this.props.h) || (lay === 'phone' ? 812 : 880);
+
+    return {
+      rootCls: 'sn sn-frame sn-' + theme + ' lay-' + lay + (solid ? ' sn-solid' : '') + (pv === 'session' ? ' pv-session' : '') + (sheetOpen ? ' sheet-open' : ''),
+      w: w, h: h,
+      isLight: theme === 'light', isDark: theme === 'dark',
+      lightBtnCls: 'icon-btn plain' + (theme === 'light' ? ' is-on' : ''),
+      darkBtnCls: 'icon-btn plain' + (theme === 'dark' ? ' is-on' : ''),
+      setLight: () => this.setState({ theme: 'light' }),
+      setDark: () => this.setState({ theme: 'dark' }),
+      toggleTheme: () => this.setState({ theme: theme === 'light' ? 'dark' : 'light' }),
+      themeToggleLabel: theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme',
+      // In an error state the header only says when the scan ran: no file count, no healthy dot.
+      isLate: fx === 'late' && !err, isOk: fx !== 'late' && !err,
+      hasErr: !!err, noErr: !err, errText: err || '',
+      pills: pills, hasSubPills: hasSubPills, subPills: subPills,
+      railItems: railItems, headName: proj ? proj.name : 'All projects', headSoon: !!(proj && proj.soon),
+      subAria: proj ? proj.name + ' sub-projects' : '',
+      hasFilterNote: hasFilterNote,
+      filterNote: others === 1 ? '1 more needs you in other projects' : others + ' more need you in other projects',
+      showAll: () => this.setState({ project: 'all', sub: 'all', selected: null }),
+      items: items,
+      setScroll: this._setScroll,
+      hasSel: !!sel, noSel: !sel, d: d,
+      emptyTitle: err ? 'No sessions to show' : 'Nothing needs you right now',
+      emptyText: err ? 'The list comes back on the first good scan.' : 'Checked just now',
+      snoozeOpen: snoozeOpen, snoozeExpanded: snoozeOpen ? 'true' : 'false',
+      toggleSnooze: () => {
+        if (snoozeOpen) this.setState({ snooze: 'closed' });
+        else this.setState({ snooze: 'open' }, () => this.focusIn('.act-btns .menu [role="menuitem"]'));
+      },
+      menuKey: (e) => this.menuKey(e),
+      detailKey: (e) => this.detailKey(e),
+      setRoot: this._setRoot,
+      snooze1h: () => this.hideSelected('snooze'),
+      snoozeTomorrow: () => this.hideSelected('tomorrow'),
+      dismiss: () => this.hideSelected('dismiss'),
+      opening: opening, notOpening: !opening,
+      open: () => {
+        this.setState({ opening: true });
+        clearTimeout(this._ot);
+        this._ot = setTimeout(() => this.setState({ opening: false }), 1200);
+      },
+      hasToast: !!TOASTS[toastKind], toastText: TOASTS[toastKind] || '',
+      undo: () => {
+        const last = this.state && this.state.lastHidden;
+        if (last) {
+          const h2 = Object.assign({}, hid); delete h2[last];
+          this.setState({ hid: h2, toast: '', selected: last }, () => this.focusRow(last));
+        } else {
+          this.setState({ hid: {}, toast: '' });
+        }
+        clearTimeout(this._tt);
+      },
+      backToList: () => this.setState({ phoneView: 'list', snooze: 'closed' }, () => this.focusRow(selId)),
+      closeSheet: () => this.setState({ sheet: 'closed', snooze: 'closed' }, () => this.focusRow(selId)),
+      detailRole: sheetOpen ? 'dialog' : undefined,
+      detailModal: sheetOpen ? 'true' : undefined,
+      listKey: (e) => {
+        const ids = navIds;
+        if (!ids.length || !e.target || !e.target.getAttribute || !e.target.getAttribute('data-sid')) return;
+        const i = ids.indexOf(selId);
+        let n = null;
+        if (e.key === 'ArrowDown') n = ids[Math.min(ids.length - 1, i + 1)];
+        else if (e.key === 'ArrowUp') n = ids[Math.max(0, i - 1)];
+        else if (e.key === 'Home') n = ids[0];
+        else if (e.key === 'End') n = ids[ids.length - 1];
+        else if (e.key === 'Enter') {
+          e.preventDefault();
+          const id = e.target.getAttribute('data-sid');
+          if (lay === 'desktop') {
+            this.setState({ selected: id, opening: true });
+            clearTimeout(this._ot);
+            this._ot = setTimeout(() => this.setState({ opening: false }), 1200);
+          } else this.pick(id);
+          return;
+        }
+        if (n) {
+          e.preventDefault();
+          this.setState({ selected: n, snooze: 'closed' }, () => this.focusRow(n));
+        }
+      },
+      pillKey: (e) => {
+        const btns = Array.prototype.slice.call(e.currentTarget.querySelectorAll('button'));
+        const i = btns.indexOf(e.target);
+        if (i < 0) return;
+        let j = null;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') j = Math.min(btns.length - 1, i + 1);
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') j = Math.max(0, i - 1);
+        else if (e.key === 'Home') j = 0;
+        else if (e.key === 'End') j = btns.length - 1;
+        if (j !== null) {
+          e.preventDefault();
+          btns.forEach((b) => { b.tabIndex = -1; });
+          btns[j].tabIndex = 0;
+          btns[j].focus();
+        }
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
