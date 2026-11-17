@@ -1,0 +1,33 @@
+{
+  "projects": [
+    {"id": "apps", "name": "Apps", "children": []},
+    {"id": "ai-video", "name": "AI video", "children": []},
+    {"id": "claude", "name": "Claude tools", "children": []},
+    {"id": "dev", "name": "Other dev projects", "children": []},
+    {"id": "personal", "name": "Personal", "children": []},
+    {"id": "other", "name": "Other", "children": []}
+  ],
+  "default": "other",
+  "rules": [
+    {"folder": "~/Dropbox/hosts/devsite/projects/feather-note", "project": "apps", "subproject": null},
+    {"folder": "~/Dropbox/feather-ftp", "project": "apps", "subproject": null},
+    {"folder": "~/Dropbox/app-windows-video-cutter-and-trimmer", "project": "apps", "subproject": null},
+    {"folder": "~/Dropbox/hosts/devsite/projects/image-resizer", "project": "apps", "subproject": null},
+    {"folder": "~/Dropbox/hosts/devsite/projects/gutenberg-writer", "project": "apps", "subproject": null},
+    {"folder": "~/Dropbox/hosts/devsite/projects/git-sync", "project": "apps", "subproject": null},
+
+    {"folder": "~/Dropbox/Ai Playground", "project": "ai-video", "subproject": null},
+    {"folder": "~/Dropbox/hosts/devsite/projects/gpt-image-2-seedance-storyboard-skill", "project": "ai-video", "subproject": null},
+    {"folder": "~/Dropbox/hosts/devsite/projects/influencer-prompts", "project": "ai-video", "subproject": null},
+    {"folder": "~/Library/Mobile Documents/com~apple~CloudDocs/Dance", "project": "ai-video", "subproject": null},
+
+    {"folder": "~/Dropbox/hosts/devsite/projects/claude-sessions-needing-attention", "project": "claude", "subproject": null},
+    {"folder": "~/Dropbox/hosts/devsite/projects/claude-api", "project": "claude", "subproject": null},
+    {"folder": "~/Dropbox/Configs/claude", "project": "claude", "subproject": null},
+
+    {"folder": "~/Dropbox/hosts/devsite/projects", "project": "dev", "subproject": null},
+
+    {"folder": "~/Dropbox/Egypt", "project": "personal", "subproject": null},
+    {"folder": "~/Dropbox/Facturi", "project": "personal", "subproject": null}
+  ]
+}

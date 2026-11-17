@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "snapshots",
+      "runtimeExecutable": "/usr/bin/python3",
+      "runtimeArgs": ["-m", "http.server", "8791", "--bind", "127.0.0.1", "--directory", "design/page-check/build"],
+      "port": 8791
+    },
+    {
+      "name": "pwa-check",
+      "runtimeExecutable": "/usr/bin/python3",
+      "runtimeArgs": ["-I", "server.py", "--port", "8792", "--root", "design/page-check/build/pwa-root"],
+      "port": 8792
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+# Real session data: never commit. It all lives in data/ (status.json, state.json, logs/),
+# which is also marked ignored by Dropbox. The older top-level names stay listed as a safety net.
+data/
+status.json
+state.json
+logs/
+
+# Generated
+design/**/build/
+*.zip
+__pycache__/
+.DS_Store
