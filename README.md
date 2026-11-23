@@ -9,9 +9,20 @@ sidebar to find them.
 This is a small local dashboard that lists only the sessions waiting on you, says what each one wants, and
 opens it in the Claude app with one click.
 
-<!-- screenshot or GIF here: use the made-up snapshots from tools/snapshot.py, never the live page -->
+<!-- Images: made-up sessions only (tools/demo-fixture.json), never the live page. How to remake them:
+     marketing/reddit-plan.md, "Images". -->
+<p align="center">
+  <img src="marketing/images/sessionbell-demo.gif" width="800"
+       alt="Sessionbell: switching to a project, dismissing a session, pinning one, then opening a question in the Claude app">
+</p>
 
 ## What it shows
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="marketing/images/sessionbell-wide-dark.png">
+  <img src="marketing/images/sessionbell-wide-light.png" width="800"
+       alt="The dashboard: sessions that need you on the left, grouped by project, with the selected session's question on the right">
+</picture>
 
 - **Needs you**: sessions that asked a question, are blocked on you, or look stuck (a turn started and went
   quiet for 30 minutes). Questions come first.
@@ -19,6 +30,8 @@ opens it in the Claude app with one click.
 - **Scheduled tasks**: the latest run of each recurring task, when it needs you.
 - **Stale**: sessions that have waited on you for over a week, folded away to archive or pick back up.
 - **Quieter**: finished turns ready to review, and unread sessions.
+- **Caught up**: finished sessions you've already read in the last week, folded away, so you can still open
+  one again.
 - Sessions grouped by project, using folder rules you write once.
 - Snooze (1 hour, until tomorrow) and Dismiss, with Undo. A dismissed session comes back when it does
   something new.
@@ -27,6 +40,12 @@ opens it in the Claude app with one click.
 - A macOS banner when a session asks something new, and a count in the tab title and Dock badge.
 - An optional reply box that sends a short answer to the session without switching apps. It's **off by
   default**; see [Replying from the dashboard](#replying-from-the-dashboard).
+
+<img src="marketing/images/sessionbell-banner.png" width="520"
+     alt="A macOS notification from Sessionbell: Fix dark mode on the settings screen">
+
+The banner above is a mock-up. A real one shows Script Editor's icon, because macOS attributes it to
+`osascript`.
 
 ## Privacy
 
@@ -46,11 +65,11 @@ opens it in the Claude app with one click.
 ## Install
 
 ```bash
-git clone <this repo> claude-dashboard
+git clone https://github.com/raduzoom/sessionbell-for-claude.git
 ```
 
 ```bash
-cd claude-dashboard && ./install.sh
+cd sessionbell-for-claude && ./install.sh
 ```
 
 `install.sh` adds two LaunchAgents: the scanner runs every 10 seconds, and the server stays on. Both start
@@ -111,6 +130,9 @@ python3 scanner.py --print
 | `pageRefreshSeconds` | `5` | How often the page re-reads the list (2–300). Reload the page. |
 | `replyEnabled` | `false` | Shows the reply box. See below. Reload the page. |
 
+To change a setting on your Mac only, put it in `config.local.json` next to `config.json`, for example
+`{"replyEnabled": true}`. Its keys win over `config.json`, and git ignores it, so an update never resets it.
+
 ## Replying from the dashboard
 
 The Claude app has no API for sending a message, so the reply box works by remote-controlling the app:
@@ -129,7 +151,7 @@ characters.
 
 Because it controls another app, it's off until you turn it on:
 
-1. Set `"replyEnabled": true` in `config.json` and reload the page.
+1. Create `config.local.json` next to `config.json` containing `{"replyEnabled": true}`, and reload the page.
 2. The first time you send, macOS asks for two permissions for `python3`: **Accessibility** (called
    "Device Control and Data Access" on newer macOS) and **Automation → System Events**. If one is missing,
    the dashboard shows where to turn it on.
@@ -161,3 +183,7 @@ from made-up data in `design/page-check/build/` for design checks and screenshot
 
 `data/` (status, snooze state, logs) holds real session titles. It's git-ignored: never commit it or share
 screenshots of the live page.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

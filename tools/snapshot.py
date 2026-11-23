@@ -56,7 +56,7 @@ function snRebase(d) {
   var now = SN_BASE;
   d = JSON.parse(JSON.stringify(d));
   d.generatedAt = Date.now() - (d.generatedAgoMs || 0);
-  ['main', 'scheduled', 'working', 'stale', 'quiet', 'hidden'].forEach(function (k) {
+  ['main', 'scheduled', 'working', 'stale', 'quiet', 'hidden', 'caughtUp'].forEach(function (k) {
     (d[k] || []).forEach(function (c) {
       c.lastActivityAt = now - (c.lastActivityAgoMs || c.waitingMs || 0);
       if (c.startedAgoMs) c.startedAt = now - c.startedAgoMs;
@@ -128,6 +128,19 @@ READ_PINNED = {"sessionId": "local_example-95", "title": "Made-up: compare two e
                "needs": "Both formats work; CSV is smaller.", "lastActivityAgoMs": 14400000,
                "link": "claude://claude.ai/epitaxy/local_example-95"}
 
+# Caught up (added 2026-11-17): finished sessions you've read in the last week, folded under Quieter.
+CAUGHT_UP = [
+    {"sessionId": "local_example-96", "title": "Made-up: tidy the onboarding checklist", "state": "read",
+     "project": "tools", "subproject": None, "repo": "internal-tools", "needs": "Checklist trimmed to six steps.",
+     "lastActivityAgoMs": 2700000, "link": "claude://claude.ai/epitaxy/local_example-96"},
+    {"sessionId": "local_example-97", "title": "TICKET-260 Made-up: second reference image for prompts", "state": "read",
+     "project": "client-a", "subproject": "client-a/us", "repo": "client-a-bot", "needs": "Both references still work.",
+     "lastActivityAgoMs": 10800000, "link": "claude://claude.ai/epitaxy/local_example-97"},
+    {"sessionId": "local_example-98", "title": "Made-up: rename the settings keys", "state": "read",
+     "project": "tools", "subproject": None, "repo": "internal-tools", "needs": "",
+     "lastActivityAgoMs": 172800000, "link": "claude://claude.ai/epitaxy/local_example-98"},
+]
+
 
 def with_pins(fixture):
     fixture = json.loads(json.dumps(fixture))
@@ -143,7 +156,7 @@ def with_folders(fixture):
     if "folders" in fixture or fixture.get("schema") != 1:
         return fixture
     seen = {}
-    for key in ("main", "scheduled", "working", "stale", "quiet", "hidden"):
+    for key in ("main", "scheduled", "working", "stale", "quiet", "hidden", "caughtUp"):
         for c in fixture.get(key) or []:
             repo = str(c.get("repo") or "").replace(" (worktree)", "")
             ago = c.get("lastActivityAgoMs") or c.get("waitingMs") or 0
@@ -182,7 +195,7 @@ def main():
             with open(os.path.join(FIXTURES, name), encoding="utf-8") as f:
                 fixture = json.load(f)
         if state in WITH_WORKING:
-            fixture = dict(fixture, working=WORKING)
+            fixture = dict(fixture, working=WORKING, caughtUp=CAUGHT_UP)
         if state == "pinned":
             fixture = with_pins(fixture)
         fixture = with_folders(fixture)
@@ -201,7 +214,7 @@ def rebased(d, now):
     """The same rebase as snRebase, for a status.json the real server serves."""
     d = json.loads(json.dumps(d))
     d["generatedAt"] = now - d.pop("generatedAgoMs", 0)
-    for key in ("main", "scheduled", "working", "stale", "quiet", "hidden"):
+    for key in ("main", "scheduled", "working", "stale", "quiet", "hidden", "caughtUp"):
         for c in d.get(key) or []:
             c["lastActivityAt"] = now - (c.get("lastActivityAgoMs") or c.get("waitingMs") or 0)
             if c.get("startedAgoMs"):
@@ -227,7 +240,7 @@ def write_pwa(page):
     with open(os.path.join(root, "index.html"), "w", encoding="utf-8") as f:
         f.write(page)
     with open(os.path.join(FIXTURES, "status-fixture.json"), encoding="utf-8") as f:
-        fixture = with_folders(dict(json.load(f), working=WORKING))
+        fixture = with_folders(dict(json.load(f), working=WORKING, caughtUp=CAUGHT_UP))
     with open(os.path.join(root, "data", "status.json"), "w", encoding="utf-8") as f:
         json.dump(rebased(fixture, int(time.time() * 1000)), f, ensure_ascii=False)
     written.append(os.path.relpath(root, HERE) + "/ (index.html, pwa/, data/status.json: made-up)")

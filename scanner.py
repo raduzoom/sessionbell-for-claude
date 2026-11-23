@@ -51,6 +51,9 @@ STATE_PATH = os.path.join(DATA_DIR, "state.json")
 # but a long tool call can be quiet for 15 (changed 2026-11-12 at the user's request, with the Working section).
 STUCK_QUIET_MS = 30 * 60_000
 STALE_MS = 7 * 24 * 60 * 60_000        # needs-you items older than this go to Stale
+# Caught up (added 2026-11-17): finished sessions you've read, which used to vanish. Kept this long, at most this many.
+CAUGHT_UP_MS = 7 * 24 * 60 * 60_000
+CAUGHT_UP_MAX = 50
 # A background subagent started longer ago than this is taken as dead, whatever its transcript's file time says:
 # old transcripts from before the app wrote "finished" get their file time bumped by other tools (seen 2026-11-16).
 SUBAGENT_MAX_AGE_MS = 72 * 60 * 60_000      # 72 hours (the user's choice, 2026-11-16)
@@ -446,6 +449,32 @@ def attach_doing(sessions, transcripts_dir, now):
             s["doingFromTranscript"] = doing
 
 
+STOP_MARKER = "[Request interrupted"
+SUBAGENT_TAIL = 64_000                  # bytes; enough for the last entry, which is all _was_stopped reads
+
+
+def _was_stopped(path):
+    """True when a subagent transcript's last entry is the interrupt marker (the agent was stopped).
+
+    TaskStop (or the user's Stop) ends a subagent without writing finished: true in its meta file (seen
+    2026-11-21), so this is the only sign it's over. Compares one entry's start with a fixed marker; the
+    text never leaves this function."""
+    try:
+        with open(path, "rb") as f:
+            f.seek(0, os.SEEK_END)
+            f.seek(max(0, f.tell() - SUBAGENT_TAIL))
+            lines = f.read().splitlines()
+        entry = _dict(json.loads(next(line for line in reversed(lines) if line.strip())))
+    except (OSError, ValueError, UnicodeDecodeError, StopIteration):
+        return False
+    if entry.get("type") != "user":
+        return False
+    content = _dict(entry.get("message")).get("content")
+    if isinstance(content, list) and content:
+        content = _dict(content[0]).get("text")
+    return isinstance(content, str) and content.startswith(STOP_MARKER)
+
+
 def subagent_activity(cli_id, transcripts_dir, now):
     """When an unfinished subagent of this session last wrote its transcript (ms), or None.
 
@@ -453,7 +482,8 @@ def subagent_activity(cli_id, transcripts_dir, now):
     looks finished. The app writes subagents/agent-*.meta.json with finished: true once one ends (seen
     2026-11-13). Reads only that flag and file times, never the transcripts' text. The meta file's time is
     when the agent started (it is written again only when it finishes); one started over SUBAGENT_MAX_AGE_MS
-    ago is ignored, because the transcript's file time alone can be bumped long after the agent died."""
+    ago is ignored, because the transcript's file time alone can be bumped long after the agent died. A
+    stopped agent never gets finished: true; its transcript's last entry says so (_was_stopped)."""
     if not isinstance(cli_id, str) or not CLI_ID.fullmatch(cli_id):
         return None
     pattern = os.path.join(glob.escape(transcripts_dir), "*", cli_id, "subagents", "agent-*.meta.json")
@@ -466,7 +496,7 @@ def subagent_activity(cli_id, transcripts_dir, now):
             written = os.path.getmtime(meta[:-len(".meta.json")] + ".jsonl") * 1000
         except (OSError, ValueError, UnicodeDecodeError):
             continue
-        if finished or now - started > SUBAGENT_MAX_AGE_MS:
+        if finished or now - started > SUBAGENT_MAX_AGE_MS or _was_stopped(meta[:-len(".meta.json")] + ".jsonl"):
             continue
         if latest is None or written > latest:
             latest = written
@@ -562,7 +592,7 @@ def _sort(cards):
 
 def error_status(error, scanned, now, menu=None):
     status = {"schema": 1, "generatedAt": now, "error": error, "projects": menu or []}
-    for key in SECTIONS + ("working", "hidden"):
+    for key in SECTIONS + ("working", "hidden", "caughtUp"):
         status[key] = []
     status["counts"] = {"scanned": scanned}
     return status
@@ -575,6 +605,8 @@ def build_status(sessions, problems, total, projects, state, now):
 
     lists = {key: [] for key in SECTIONS}
     working = []
+    caught_up = []
+    hidden = []
     # A pinned session stays where it would be anyway, in the same order, with "pinned": true. Once you've
     # read it (it would drop off), it stays in Quieter as "read" until you unpin it. A pin beats any hide.
     pins = pinned_ids(state)
@@ -584,12 +616,26 @@ def build_status(sessions, problems, total, projects, state, now):
         state_name = classify(s, now)
         pinned = s["sessionId"] in pins
         if state_name is None and not pinned:
+            # Nothing left to do and you've read it: Caught up, so it can still be opened (never counted).
+            # Dismissing one (added 2026-11-18) moves it to Hidden until the session has new activity.
+            if now - s["lastActivityAt"] <= CAUGHT_UP_MS:
+                card = _card(s, "read", projects, now)
+                by = hidden_by(card, state, now)
+                if by:
+                    hidden.append(dict(card, section="caughtUp", hiddenBy=by))
+                else:
+                    caught_up.append(card)
             continue
         card = _card(s, state_name or "read", projects, now)
         if pinned:
             card["pinned"] = True
-        if state_name == "working":            # doesn't need you yet: its own list, never hidden or counted
-            working.append(card)
+        if state_name == "working":            # doesn't need you yet: its own list, never counted
+            # Dismiss (added 2026-11-21, a manual override when it only looks busy) hides it until it changes.
+            by = None if pinned else hidden_by(card, state, now)
+            if by:
+                hidden.append(dict(card, section="working", hiddenBy=by))
+            else:
+                working.append(card)
             continue
         if state_name in NEEDS_YOU:
             if s.get("scheduledTaskId"):       # only a pinned run gets here; runs are never Stale
@@ -604,7 +650,6 @@ def build_status(sessions, problems, total, projects, state, now):
         if state_name in NEEDS_YOU:            # a recurring task's latest run is never Stale
             lists["scheduled"].append(_card(s, state_name, projects, now))
 
-    hidden = []
     for section in SECTIONS:
         visible = []
         for card in lists[section]:
@@ -620,6 +665,7 @@ def build_status(sessions, problems, total, projects, state, now):
     status.update(lists)
     status["working"] = _sort(working)
     status["hidden"] = _sort(hidden)
+    status["caughtUp"] = _sort(caught_up)[:CAUGHT_UP_MAX]
     status["folders"] = folder_list(sessions, projects)
     status["counts"] = {
         "main": len(needs_you),
@@ -629,6 +675,7 @@ def build_status(sessions, problems, total, projects, state, now):
         "stale": len(lists["stale"]),
         "quiet": len(lists["quiet"]),
         "hidden": len(hidden),
+        "caughtUp": len(status["caughtUp"]),
         "scanned": total,
     }
     return status
@@ -758,6 +805,7 @@ def _print_list(status, sessions, cfg):
     show("Stale: archive or revive?", status["stale"])
     show("Quieter", status["quiet"])
     show("Hidden", status["hidden"], lambda c: c["hiddenBy"]["kind"] + " from " + c["section"])
+    show("Caught up", status["caughtUp"])
 
     unmatched = {}
     for s in sessions:
@@ -794,7 +842,7 @@ def _print_summary(status, sessions, cfg):
     counts = status["counts"]
     print("scanned: %d" % counts["scanned"])
     print("needs you: %d (asked %d)" % (counts["main"], counts["asked"]))
-    for key in ("main", "scheduled", "working", "stale", "quiet", "hidden"):
+    for key in ("main", "scheduled", "working", "stale", "quiet", "hidden", "caughtUp"):
         by_state = {}
         for c in status[key]:
             by_state[c["state"]] = by_state.get(c["state"], 0) + 1

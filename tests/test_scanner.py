@@ -561,13 +561,13 @@ class TranscriptDoingTests(TempDir):
 class SubagentTests(TempDir):
     """A turn that ended while its background subagents keep running is still working (seen 2026-11-13)."""
 
-    def agent(self, name, finished, written, cli_id=CLI_ID, folder="-work-tools", started=None):
+    def agent(self, name, finished, written, cli_id=CLI_ID, folder="-work-tools", started=None, lines="{}\n"):
         base = os.path.join("projects", folder, cli_id, "subagents", "agent-" + name)
         meta = {"agentType": "general-purpose", "finished": True} if finished else {"agentType": "general-purpose"}
         started = written if started is None else started
         meta_path = self.write(base + ".meta.json", json.dumps(meta))
         os.utime(meta_path, (started / 1000, started / 1000))
-        jsonl = self.write(base + ".jsonl", "{}\n")
+        jsonl = self.write(base + ".jsonl", lines)
         os.utime(jsonl, (written / 1000, written / 1000))
 
     def activity(self, cli_id=CLI_ID):
@@ -579,6 +579,19 @@ class SubagentTests(TempDir):
         self.agent("old", finished=False, written=NOW - MIN, started=NOW - 39 * DAY)
         self.assertIsNone(self.activity())
         self.agent("new", finished=False, written=NOW - 2 * MIN, started=NOW - 3 * HOUR)
+        self.assertAlmostEqual(self.activity(), NOW - 2 * MIN, delta=1000)
+
+    def test_stopped_agent_is_ignored(self):
+        # Seen 2026-11-21: TaskStop ends a subagent without writing finished: true; its transcript ends with
+        # the interrupt marker, and the session showed as Working for 30 minutes after its turn ended.
+        work = json.dumps({"type": "assistant", "message": {"content": [{"type": "tool_use", "name": "WebSearch"}]}})
+        for i, content in enumerate(("[Request interrupted by user]",
+                                     [{"type": "text", "text": "[Request interrupted by user for tool use]"}])):
+            stop = json.dumps({"type": "user", "message": {"role": "user", "content": content}})
+            self.agent("s%d" % i, finished=False, written=NOW - MIN, lines=work + "\n" + stop + "\n")
+        self.assertIsNone(self.activity())
+        # An agent that's still going (last entry is its own work, or a plain user message) still counts.
+        self.agent("live", finished=False, written=NOW - 2 * MIN, lines=work + "\n")
         self.assertAlmostEqual(self.activity(), NOW - 2 * MIN, delta=1000)
 
     def test_latest_unfinished_agent_counts(self):
@@ -750,7 +763,7 @@ class StatusTests(unittest.TestCase):
                              summary("review_ready", "local_rr"),
                              asked("local_task", scheduledTaskId="task-1")])
         self.assertEqual(status["counts"], {"main": 3, "asked": 2, "working": 0, "pinned": 0, "stale": 1,
-                                            "quiet": 1, "hidden": 0, "scanned": 5})
+                                            "quiet": 1, "hidden": 0, "caughtUp": 0, "scanned": 5})
 
     def test_error_status_has_empty_lists(self):
         status = scanner.build_status([], 3, 3, config(), {}, NOW)
@@ -787,6 +800,21 @@ class StatusTests(unittest.TestCase):
         card = status["working"][0]
         self.assertEqual((card["state"], card["needs"], card["startedAt"]), ("working", "", NOW - 3 * MIN))
         self.assertNotIn("doing", card)
+
+    def test_dismissed_working_session_is_hidden_until_it_changes(self):
+        # Added 2026-11-21: a manual override for a session that only looks busy.
+        sessions = [asked(),
+                    session("local_w1", last=NOW - MIN, lastTurnEdgeAt=NOW - 3 * MIN),
+                    session("local_w2", last=NOW - MIN, lastTurnEdgeAt=NOW - 3 * MIN),
+                    session("local_w3", last=NOW - MIN, lastTurnEdgeAt=NOW - 3 * MIN)]
+        state = {"hidden": {"local_w1": {"kind": "dismiss", "lastActivityAt": NOW - MIN},
+                            "local_w2": {"kind": "dismiss", "lastActivityAt": NOW - 2 * MIN},   # active since
+                            "local_w3": {"kind": "dismiss", "lastActivityAt": NOW - MIN}},
+                 "pinned": {"local_w3": {"at": NOW}}}                                          # a pin wins
+        status = self.build(sessions, state=state)
+        self.assertEqual(sorted(self.ids(status["working"])), ["local_w2", "local_w3"])
+        self.assertEqual([(c["sessionId"], c["section"]) for c in status["hidden"]], [("local_w1", "working")])
+        self.assertEqual((status["counts"]["working"], status["counts"]["hidden"]), (2, 1))
 
     def test_working_card_carries_what_it_is_doing(self):
         w = session("local_w", last=NOW - MIN, lastTurnEdgeAt=NOW - 3 * MIN, doingFromTranscript="Step 2")
@@ -856,6 +884,54 @@ class PinnedTests(unittest.TestCase):
         for pinned in ([1], "x", {"local_asked": True}, None):
             status = scanner.build_status([asked()], 0, 1, config(), {"pinned": pinned}, NOW)
             self.assertNotIn("pinned", status["main"][0], pinned)
+
+
+class CaughtUpTests(unittest.TestCase):
+    """Caught up (added 2026-11-17): finished sessions you've read stay listed for a week, newest first."""
+
+    def build(self, sessions, state=None):
+        return scanner.build_status(sessions, 0, len(sessions), config(), state or {}, NOW)
+
+    def test_read_sessions_newest_first(self):
+        sessions = [session("local_old", last=NOW - 2 * DAY), session("local_new", last=NOW - HOUR), asked(),
+                    summary("review_ready", "local_rr")]
+        status = self.build(sessions)
+        self.assertEqual([(c["sessionId"], c["state"]) for c in status["caughtUp"]],
+                         [("local_new", "read"), ("local_old", "read")])
+        self.assertEqual(status["caughtUp"][0]["link"], scanner.LINK_PREFIX + "local_new")
+        self.assertEqual((status["counts"]["caughtUp"], status["counts"]["main"], status["counts"]["quiet"]), (2, 1, 1))
+
+    def test_older_than_a_week_archived_or_pinned_left_out(self):
+        sessions = [session("local_week", last=NOW - scanner.CAUGHT_UP_MS),
+                    session("local_older", last=NOW - scanner.CAUGHT_UP_MS - 1),
+                    session("local_arch", isArchived=True), session("local_pin"), asked()]
+        status = self.build(sessions, {"pinned": {"local_pin": {"at": NOW}}})
+        self.assertEqual([c["sessionId"] for c in status["caughtUp"]], ["local_week"])
+        self.assertEqual([c["sessionId"] for c in status["quiet"]], ["local_pin"])     # pinned: Quieter, as before
+
+    def test_capped(self):
+        sessions = [session("local_%d" % i, last=NOW - i * MIN) for i in range(scanner.CAUGHT_UP_MAX + 5)] + [asked()]
+        got = self.build(sessions)["caughtUp"]
+        self.assertEqual(len(got), scanner.CAUGHT_UP_MAX)
+        self.assertEqual(got[-1]["sessionId"], "local_%d" % (scanner.CAUGHT_UP_MAX - 1))
+
+    def test_dismissed_goes_to_hidden_until_new_activity(self):
+        # Added 2026-11-18: a caught-up card can be dismissed; it sits in Hidden ("Show again") until it changes.
+        sessions = [session("local_a", last=NOW - HOUR), session("local_b", last=NOW - 2 * HOUR), asked()]
+        state = {"hidden": {sid: {"kind": "dismiss", "lastActivityAt": NOW - 2 * HOUR, "at": NOW}
+                            for sid in ("local_a", "local_b")}}
+        status = self.build(sessions, state)
+        self.assertEqual([c["sessionId"] for c in status["caughtUp"]], ["local_a"])     # newer than the dismissal
+        self.assertEqual([(c["sessionId"], c["section"], c["state"], c["hiddenBy"]) for c in status["hidden"]],
+                         [("local_b", "caughtUp", "read", {"kind": "dismiss"})])
+        self.assertEqual((status["counts"]["caughtUp"], status["counts"]["hidden"], status["counts"]["main"]), (1, 1, 1))
+
+    def test_dismissed_older_than_a_week_left_out_and_error_status_has_the_list(self):
+        old = NOW - scanner.CAUGHT_UP_MS - 1
+        state = {"hidden": {"local_a": {"kind": "dismiss", "lastActivityAt": old, "at": NOW}}}
+        status = self.build([session("local_a", last=old), asked()], state)
+        self.assertEqual((status["caughtUp"], status["hidden"]), ([], []))
+        self.assertEqual(scanner.error_status("x", 1, NOW)["caughtUp"], [])
 
 
 # 8. Writing ---------------------------------------------------------------------------------

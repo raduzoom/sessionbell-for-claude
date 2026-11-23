@@ -3,7 +3,7 @@
 
 Serves the page and data/status.json on http://127.0.0.1:8790 only, and stores Snooze, Dismiss and Pin in
 data/state.json (it is that file's only writer). Routes: GET /, GET /status.json, GET /state.json,
-GET /health, POST /state, POST /reply (types a reply into a listed Claude session, only when config.json has "replyEnabled": true:
+GET /health, POST /state, POST /reply (types a reply into a listed Claude session, only when config.local.json or config.json has "replyEnabled": true:
 see "Reply" below), and
 the installed app's fixed files from pwa/ (STATIC: manifest, service worker, icons). It serves real session titles and accepts writes, so every request goes through
 the guards in handoff §8: loopback only, a strict Host check (stops DNS rebinding), the page's own Origin and
@@ -68,21 +68,29 @@ CLAUDE_APP_ID = "com.anthropic.claudefordesktop"
 SWITCH_TIMEOUT_S = 10
 
 
+def _json_object(path):
+    """The JSON object in path, or {} when the file is missing, unreadable or not an object."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError, RecursionError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
 def read_config(root):
     """What the page needs from config.json: how often to re-read the status (2 to 300 s), and whether the
-    reply bar is on. Replies are off unless the file says "replyEnabled": true."""
+    reply bar is on. Replies are off unless the file says "replyEnabled": true.
+
+    config.local.json (git-ignored, this Mac's own choices) overrides config.json key by key, so the shared,
+    published file can keep replies off while this Mac turns them on."""
+    config = _json_object(os.path.join(root, "config.json"))
+    config.update(_json_object(os.path.join(root, "config.local.json")))
     seconds = PAGE_REFRESH_S
-    reply = False
-    try:
-        with open(os.path.join(root, "config.json"), encoding="utf-8") as f:
-            config = json.load(f)
-        value = config.get("pageRefreshSeconds")
-        if isinstance(value, (int, float)) and not isinstance(value, bool) and 2 <= value <= 300:
-            seconds = value
-        reply = config.get("replyEnabled") is True
-    except (OSError, ValueError, AttributeError, RecursionError):
-        pass
-    return {"pageRefreshSeconds": seconds, "replyEnabled": reply}
+    value = config.get("pageRefreshSeconds")
+    if isinstance(value, (int, float)) and not isinstance(value, bool) and 2 <= value <= 300:
+        seconds = value
+    return {"pageRefreshSeconds": seconds, "replyEnabled": config.get("replyEnabled") is True}
 
 
 def status_path(root):
@@ -104,7 +112,7 @@ def _number(value):
 def _error_status(message):
     """What the page gets when there's no usable status: a red banner, never a calm 0."""
     status = {"schema": 1, "generatedAt": None, "error": message, "projects": []}
-    for key in SECTIONS + ("working",):
+    for key in SECTIONS + ("working", "caughtUp"):
         status[key] = []
     status["counts"] = {}
     return status
@@ -118,7 +126,8 @@ def _expected_shape(data):
             and isinstance(data.get("projects"), list) and isinstance(data.get("counts"), dict)
             and all(isinstance(data.get(key), list) for key in SECTIONS)
             # "working" was added later: optional, but a list when present.
-            and isinstance(data.get("working", []), list))
+            and isinstance(data.get("working", []), list)
+            and isinstance(data.get("caughtUp", []), list))     # added 2026-11-17, optional the same way
 
 
 # state.json ---------------------------------------------------------------------------------
@@ -271,7 +280,7 @@ def listed_sessions(path):
         return None
     if not isinstance(data, dict) or not _expected_shape(data):
         return None
-    return {c.get("sessionId") for key in SECTIONS + ("working",) for c in data.get(key, [])
+    return {c.get("sessionId") for key in SECTIONS + ("working", "caughtUp") for c in data.get(key, [])
             if isinstance(c, dict)}
 
 
@@ -642,7 +651,7 @@ class Handler(BaseHTTPRequestHandler):
     def _reply(self, body):
         # Off unless config.json turns it on: typing into another app needs the user's say-so.
         if not read_config(self.server.root)["replyEnabled"]:
-            return self._text(403, 'Replying from the dashboard is off. Set "replyEnabled": true in config.json '
+            return self._text(403, 'Replying from the dashboard is off. Set "replyEnabled": true in config.local.json '
                                    "and reload the page. Nothing was typed.")
         try:
             sid, text = clean_reply(body)

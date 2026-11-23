@@ -381,6 +381,7 @@
 .menu { position: absolute; right: 0; bottom: 56px; z-index: 6; min-width: 320px; padding: 8px; border-radius: var(--r-md); display: flex; flex-direction: column; gap: 4px; box-shadow: inset 0 1px 0 var(--glass-edge), var(--shadow-pop); }
 .menu-item { display: flex; align-items: center; gap: 16px; width: 100%; height: 48px; padding: 0 16px; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--ink-1); font: 500 15px/20px var(--font); text-align: left; white-space: nowrap; cursor: pointer; }
 .menu-item .ic { color: var(--ink-2); }
+.menu-key { flex: none; min-width: 24px; height: 24px; margin-left: auto; padding: 0 8px; border-radius: 4px; background: var(--hover); color: var(--ink-2); font: 500 12px/24px var(--font); text-align: center; }
 .menu-item:hover, .menu-item.is-hover { background: var(--hover); }
 .menu-item:active { background: var(--press); }
 .menu-item:focus-visible, .menu-item.is-focus { outline: 2px solid var(--focus); outline-offset: -2px; }
@@ -584,7 +585,7 @@ a.btn { text-decoration: none; }
   // ---------- State ----------
   var opts = window.__SN_OPTIONS__ || {};
   var S = {
-    data: null, project: 'all', sub: 'all', selected: null, expStale: false, expHidden: false,
+    data: null, project: 'all', sub: 'all', selected: null, expStale: false, expHidden: false, expCaught: false,
     sheet: false, phoneView: 'list', opening: null, theme: opts.theme || store('sn.theme') || null,
     layout: 'desktop', focusNext: null, lastFetchFailed: false,
     // Phase 4: raw = the scanner's status; state = state.json; data = raw with state applied.
@@ -622,7 +623,7 @@ a.btn { text-decoration: none; }
 
   // ---------- Data ----------
   function errorData(message, generatedAt) {
-    return { schema: 1, generatedAt: generatedAt || null, error: message, projects: [], main: [], scheduled: [], working: [], stale: [], quiet: [], hidden: [], folders: [], counts: {} };
+    return { schema: 1, generatedAt: generatedAt || null, error: message, projects: [], main: [], scheduled: [], working: [], stale: [], quiet: [], hidden: [], caughtUp: [], folders: [], counts: {} };
   }
   function normalise(d) {
     if (!d || typeof d !== 'object') return errorData("The status can't be read.");
@@ -637,6 +638,8 @@ a.btn { text-decoration: none; }
       generatedAt: num(d.generatedAt), error: d.error ? String(d.error) : null,
       projects: list(d.projects), main: list(d.main), scheduled: list(d.scheduled), working: list(d.working), stale: list(d.stale),
       quiet: list(d.quiet), hidden: list(d.hidden), counts: d.counts && typeof d.counts === 'object' ? d.counts : {},
+      // Added 2026-11-17, optional: finished sessions you've read (Caught up), so they can still be opened.
+      caughtUp: list(d.caughtUp),
       // Added 2026-11-16, optional: the folders the New session picker offers. A bad list only empties the picker.
       folders: list(d.folders).filter(goodFolder)
     };
@@ -646,6 +649,8 @@ a.btn { text-decoration: none; }
   var SNOOZE_MAX_MS = 8 * 24 * 60 * 60 * 1000;
   var RANK = { asked: 0, stuck: 1, blocked: 2, review_ready: 3, unread: 4, working: 5, read: 6 };
   var SECTION_KEYS = { main: 1, scheduled: 1, stale: 1, quiet: 1 };
+  // Caught up (added 2026-11-17): the same rule as scanner.CAUGHT_UP_MS / CAUGHT_UP_MAX.
+  var CAUGHT_UP_MS = 7 * 24 * 60 * 60 * 1000, CAUGHT_UP_MAX = 50;
   // Pinned (added 2026-11-15): the same rule as scanner.pinned_ids. A pinned card stays in its own section, in
   // the same order, with a small pin; it is never hidden, and once read it stays in Quieter as "read".
   function isPinned(sid, state) {
@@ -682,23 +687,35 @@ a.btn { text-decoration: none; }
     d.hidden.forEach(function (c) {
       var plain = {};
       for (var f in c) if (f !== 'section' && f !== 'hiddenBy') plain[f] = c[f];
-      entries.push([plain, own(SECTION_KEYS, c.section) ? c.section : 'main']);
+      // A hidden Caught up card (state "read") goes through the read rule below, like the caught-up ones.
+      entries.push([plain, own(SECTION_KEYS, c.section) || c.section === 'working' ? c.section : c.section === 'caughtUp' ? 'quiet' : 'main']);
     });
-    // Working cards are never hidden, but they can be pinned.
+    // Working cards can be pinned, or dismissed until they change (added 2026-11-21).
     out.working = [];
     (d.working || []).forEach(function (c) { entries.push([c, 'working']); });
+    // Caught-up cards are read: pinning one keeps it at the end of Quieter, as the next scan would.
+    out.caughtUp = [];
+    (d.caughtUp || []).forEach(function (c) { entries.push([c, 'quiet']); });
     out.hidden = [];
     entries.forEach(function (pair) {
       var c = {};
       for (var f in pair[0]) if (f !== 'pinned') c[f] = pair[0][f];
       if (isPinned(c.sessionId, state)) { c.pinned = true; out[pair[1]].push(c); return; }
-      // Unpinning a session you've read drops it, as the next scan would.
-      if (c.state === 'read') return;
-      var by = pair[1] === 'working' ? null : hiddenBy(c, state, now);
+      // An unpinned session you've read goes to Caught up for a week, as the next scan would; dismissed
+      // (added 2026-11-18), to Hidden until it has new activity.
+      if (c.state === 'read') {
+        if (num(c.lastActivityAt) === null || now - c.lastActivityAt > CAUGHT_UP_MS) return;
+        var hid = hiddenBy(c, state, now);
+        if (hid) { c.section = 'caughtUp'; c.hiddenBy = hid; out.hidden.push(c); }
+        else out.caughtUp.push(c);
+        return;
+      }
+      var by = hiddenBy(c, state, now);
       if (by) { c.section = pair[1]; c.hiddenBy = by; out.hidden.push(c); }
       else out[pair[1]].push(c);
     });
-    Object.keys(SECTION_KEYS).concat(['working', 'hidden']).forEach(function (key) { sortCards(out[key]); });
+    Object.keys(SECTION_KEYS).concat(['working', 'hidden', 'caughtUp']).forEach(function (key) { sortCards(out[key]); });
+    out.caughtUp = out.caughtUp.slice(0, CAUGHT_UP_MAX);
     return out;
   }
 
@@ -760,7 +777,7 @@ a.btn { text-decoration: none; }
   }
   function view() {
     var d = S.data;
-    var v = { needs: [], sched: [], working: [], stale: [], quiet: [], hidden: [], nav: [] };
+    var v = { needs: [], sched: [], working: [], stale: [], quiet: [], hidden: [], caughtUp: [], nav: [] };
     if (!d || d.error) return v;
     v.needs = d.main.filter(matches);
     v.sched = d.scheduled.filter(matches);
@@ -768,7 +785,8 @@ a.btn { text-decoration: none; }
     v.stale = d.stale.filter(matches);
     v.quiet = d.quiet.filter(matches);
     v.hidden = d.hidden.filter(matches);
-    v.nav = v.needs.concat(v.sched, v.working, S.expStale ? v.stale : [], v.quiet);
+    v.caughtUp = list(d.caughtUp).filter(matches);
+    v.nav = v.needs.concat(v.sched, v.working, S.expStale ? v.stale : [], v.quiet, S.expCaught ? v.caughtUp : []);
     return v;
   }
   function byId(v, sid) {
@@ -980,15 +998,22 @@ a.btn { text-decoration: none; }
     m.style.left = left + 'px';
     m.style.top = top + 'px';
   }
+  // The letter that runs a menu item while its menu is open (menuKeys): P pins or unpins, D dismisses.
+  function keyHint(letter) { return h('kbd', { class: 'menu-key', 'aria-hidden': 'true', text: letter }); }
   function menuItems(card, withDismiss) {
     var now = Date.now();
     var hour = now + 60 * 60 * 1000;
     var pinned = card.pinned === true;
-    var pinItem = h('button', { class: 'menu-item', type: 'button', role: 'menuitem', 'data-key': 'menu:pin',
+    var pinItem = h('button', { class: 'menu-item', type: 'button', role: 'menuitem', 'data-key': 'menu:pin', 'aria-keyshortcuts': 'P',
                                 onclick: function () { setPin(card, !pinned); } },
-      [icon(pinned ? 'unpin' : 'pin'), pinned ? 'Unpin' : 'Pin: keep it here after you read it']);
-    // A pinned card has only Unpin; a working one only Pin (nothing to hide while it runs).
-    if (pinned || card.state === 'working') return [pinItem];
+      [icon(pinned ? 'unpin' : 'pin'), pinned ? 'Unpin' : 'Pin: keep it here after you read it', keyHint('P')]);
+    var dismissItem = h('button', { class: 'menu-item', type: 'button', role: 'menuitem', 'data-key': 'menu:dismiss', 'aria-keyshortcuts': 'D',
+                                    onclick: function () { act(card, 'dismiss', null, 'Dismissed until it changes'); } },
+      [icon('eyeoff'), 'Dismiss', keyHint('D')]);
+    // A pinned card has only Unpin; a working or caught-up (read) one Pin and Dismiss (no Snooze). Dismiss on
+    // a working card (added 2026-11-21) overrides a session that only looks busy, until it has new activity.
+    if (pinned) return [pinItem];
+    if (card.state === 'working' || card.state === 'read') return withDismiss ? [pinItem, dismissItem] : [pinItem];
     var items = [
       pinItem,
       h('button', { class: 'menu-item', type: 'button', role: 'menuitem', 'data-key': 'menu:1h',
@@ -998,11 +1023,7 @@ a.btn { text-decoration: none; }
                     onclick: function () { act(card, 'snooze', tomorrowNine(now), 'Snoozed until tomorrow 9:00'); } },
         [icon('sunrise'), 'Snooze until tomorrow 9:00'])
     ];
-    if (withDismiss) {
-      items.push(h('button', { class: 'menu-item', type: 'button', role: 'menuitem', 'data-key': 'menu:dismiss',
-                               onclick: function () { act(card, 'dismiss', null, 'Dismissed until it changes'); } },
-        [icon('eyeoff'), 'Dismiss']));
-    }
+    if (withDismiss) items.push(dismissItem);
     return items;
   }
 
@@ -1312,6 +1333,9 @@ a.btn { text-decoration: none; }
       if (S.expStale) v.stale.forEach(function (c) { body.push(row(c, items, 'stale', sel, firstSid)); });
       body.push(secHeader('Quieter', v.quiet.length, 0));
       v.quiet.forEach(function (c) { body.push(row(c, items, 'quiet', sel, firstSid)); });
+      // Caught up: finished sessions you've read in the last week, folded; click one to open it again.
+      body.push(archRow('Caught up', v.caughtUp.length, S.expCaught, 'check', function () { S.expCaught = !S.expCaught; S.focusNext = 'arch:caught'; render(); }, 'arch:caught'));
+      if (S.expCaught) v.caughtUp.forEach(function (c) { body.push(row(c, items, 'quiet', sel, firstSid)); });
       body.push(archRow('Hidden', v.hidden.length, S.expHidden, 'eyeoff', function () { S.expHidden = !S.expHidden; S.focusNext = 'arch:hidden'; render(); }, 'arch:hidden'));
       if (S.expHidden) v.hidden.forEach(function (c) { body.push(hiddenRow(c, items, now)); });
     }
@@ -1593,6 +1617,12 @@ a.btn { text-decoration: none; }
     else if (e.key === 'End') j = items.length - 1;
     else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeMenu(true); return; }
     else if (e.key === 'Tab') { S.menu = null; S.focusNext = S.menuReturn; e.preventDefault(); render(); return; }
+    else if (!e.metaKey && !e.ctrlKey && !e.altKey && /^[pd]$/i.test(e.key)) {
+      // P and D run Pin / Unpin and Dismiss; a menu without that item (a pinned card has no Dismiss) ignores the key.
+      var hit = e.currentTarget.querySelector('[data-key="menu:' + (/p/i.test(e.key) ? 'pin' : 'dismiss') + '"]');
+      if (hit) { e.preventDefault(); hit.click(); }
+      return;
+    }
     if (j === null) return;
     e.preventDefault();
     items[j].focus();

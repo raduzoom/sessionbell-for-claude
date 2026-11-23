@@ -44,6 +44,9 @@ When you change how fast the dashboard updates, edit `config.json` (top level, s
   on every `GET /config.json` and serves only this key; the page asks once, so reload the page. No restart.
 - `replyEnabled` (default `false`): turns the reply bar on (see "Reply bar"). Only `true` turns it on. The
   server reads it on every `POST /reply` and `GET /config.json`, so reload the page; no restart.
+- `config.local.json` (top level, git-ignored, added 2026-11-17) overrides `config.json` key by key, read by
+  the server (`read_config`) and `install.sh`. `config.json` is the published default; this Mac's own
+  choices go in the local file. A broken local file is ignored, never turns replies on.
 - A missing file or a wrong value falls back to the default. Worst-case delay is the two added together.
   Before 2026-11-14 they were fixed at 60 s and 30 s.
 
@@ -65,7 +68,10 @@ When you change how fast the dashboard updates, edit `config.json` (top level, s
   (`finished: true` once done) and the matching `.jsonl`'s file time, never its text. An unfinished agent quiet
   for 30 minutes no longer counts (found 2026-11-13). Nor does one started over 72 hours ago (the meta file's
   time, `SUBAGENT_MAX_AGE_MS`): old transcripts from before the app wrote `finished` get their `.jsonl` file
-  time bumped by other tools, which showed 39-day-old sessions as Working (found 2026-11-16).
+  time bumped by other tools, which showed 39-day-old sessions as Working (found 2026-11-16). A subagent
+  stopped with TaskStop (or Stop) never gets `finished: true`; its `.jsonl`'s last entry is a user message
+  starting `[Request interrupted`, and `_was_stopped` skips it (only that prefix is compared). Before this, a
+  finished turn that stopped its agents showed as Working for 30 minutes (found 2026-11-21).
 - A Working card has a `doing` line (added 2026-11-13), shown bottom-left of its row: the plan step marked
   in progress, read from the last 1 MB of the CLI transcript by replaying `mcp__ccd_turn__update_plan` (and
   `TodoWrite`) calls; with no plan, the first line of your latest typed message. No model call: the text
@@ -118,14 +124,40 @@ When you change how fast the dashboard updates, edit `config.json` (top level, s
   Change both sides together.
 - Snapshots get a fake state store (`window.__STATE_SINK__`); the `savefail` snapshot shows the failure toast.
 
+## Caught up (added 2026-11-17)
+
+A finished session you've read (nothing asked, not blocked or review-ready, focused after its last activity)
+used to vanish from the list. Now it goes to **Caught up**, a folded section between Quieter and Hidden, so it
+can still be opened. The user chose the name (other options were Recent, Done, History).
+
+- `status.json` `"caughtUp"`: cards with state `"read"`, unarchived and unpinned, last activity within
+  `CAUGHT_UP_MS` (7 days), newest first, at most `CAUGHT_UP_MAX` (50). `counts.caughtUp` is its length.
+  Never counted in Needs you, the badge or banners.
+- Optional like `working`: the server's shape check and `listed_sessions` accept it (so a reply works from it).
+- A read card's menu has Pin and Dismiss (no Snooze; Dismiss added 2026-11-18, the user's ask). A dismissed
+  caught-up card goes to Hidden with `"section": "caughtUp"` until the session has new activity (or past the
+  7 days); Show again or Undo puts it back. Scanner (`build_status`) and page (`applyState`) share the rule. Pinning moves it to the end of Quieter (as before); unpinning a read card
+  sends it to Caught up. The page (`applyState`, `CAUGHT_UP_MS` / `CAUGHT_UP_MAX`) and the scanner share the
+  rule; `tests/test_page_rule.py` checks it.
+- Snapshots: `CAUGHT_UP` in `tools/snapshot.py`, added wherever the Working cards are.
+
+## Dismissing a Working card (added 2026-11-21)
+
+The user's manual override for a session that only looks busy. Dismiss on a Working card hides it (Hidden,
+`"section": "working"`) until the session's `lastActivityAt` moves, the same rule as every dismiss; a pin
+wins. Scanner (`build_status`) and page (`applyState`) share it; `tests/test_page_rule.py` checks it. A
+session that really runs moves `lastActivityAt` often, so it comes back on its next activity.
+
 ## Pinned (added 2026-11-15)
 
 A pinned session keeps its place: same section, same order, with a pin in a ringed circle before its title
 (and "Pinned" in the session pane). It never gets its own section (the user's call, 2026-11-15). Once you've
 read it, when it would drop off the list, it stays at the end of Quieter with a grey "Read" badge until you
 unpin it. Pin / Unpin is the first item in the "More actions" menu; a pinned card's menu has only Unpin, a
-working card's only Pin. Right-clicking a list row opens the same menu at the pointer in every layout (added
+working card's Pin and Dismiss. Right-clicking a list row opens the same menu at the pointer in every layout (added
 2026-11-16: `openCtx` / `placeCtx` in `index.html`, kept inside the list).
+While any of these menus is open, **P** runs Pin / Unpin and **D** runs Dismiss (added 2026-11-21, the user's
+ask); each item shows its letter on the right (`keyHint`, `menuKeys`). A menu without Dismiss ignores D.
 
 - `state.json` has `"pinned": {sessionId: {"at": ms}}`, written by `POST /state` with `action` `pin` / `unpin`.
   Pins never expire; the server keeps the newest 200 (`MAX_PINS`). The latest choice wins: pinning clears a
@@ -163,8 +195,8 @@ actions" menu (Snooze, Dismiss) sit in its header. Plan: `plans/reply-bar.md`.
 - **Off by default** (decided 2026-11-15, before sharing the tool): it types into another app with
   Accessibility permissions, so a new user must opt in with `"replyEnabled": true` in `config.json`. While
   it's off the pane has no footer, Open session is the filled button, and `POST /reply` answers 403 before
-  doing anything. This Mac's `config.json` has it `true` (the user's choice, 2026-11-15); set it back to
-  `false` in the copy that gets published. Snapshot
+  doing anything. `config.json` keeps it `false` (the published default); this Mac turns it on in
+  `config.local.json` (the user's choice, 2026-11-15; moved there 2026-11-17). Snapshot
   `replyoff` shows the off state, the others show it on.
 - `POST /reply {"sessionId", "text"}` has the same guards as `POST /state` (Host, Origin, JSON), a 64 KB body,
   1–4,000 characters, and only goes to a session in the current `data/status.json`. One send at a time (409).

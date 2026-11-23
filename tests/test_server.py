@@ -139,6 +139,21 @@ class ServerTests(unittest.TestCase):
         code, _, body = self.request("/config.json")
         self.assertEqual((code, json.loads(body)), (200, {"pageRefreshSeconds": 20, "replyEnabled": True}))
 
+    def test_config_local_overrides_shared(self):
+        # config.json ships with replies off; this Mac's git-ignored config.local.json can turn them on.
+        with open(os.path.join(self.root, "config.json"), "w", encoding="utf-8") as f:
+            json.dump({"pageRefreshSeconds": 20, "replyEnabled": False}, f)
+        local = os.path.join(self.root, "config.local.json")
+        with open(local, "w", encoding="utf-8") as f:
+            json.dump({"replyEnabled": True}, f)
+        code, _, body = self.request("/config.json")
+        self.assertEqual((code, json.loads(body)), (200, {"pageRefreshSeconds": 20, "replyEnabled": True}))
+        for text in ("not json", "[]", '{"replyEnabled": "true"}'):   # a bad local file never turns replies on
+            with open(local, "w", encoding="utf-8") as f:
+                f.write(text)
+            code, _, body = self.request("/config.json")
+            self.assertEqual((code, json.loads(body)), (200, {"pageRefreshSeconds": 20, "replyEnabled": False}), text)
+
     def test_health(self):
         code, _, body = self.request("/health")
         self.assertEqual((code, json.loads(body)), (200, {"ok": True}))
