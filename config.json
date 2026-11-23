@@ -1,5 +1,5 @@
 {
   "scanEverySeconds": 10,
   "pageRefreshSeconds": 5,
-  "replyEnabled": true
+  "replyEnabled": false
 }

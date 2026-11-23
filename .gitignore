@@ -10,3 +10,6 @@ design/**/build/
 *.zip
 __pycache__/
 .DS_Store
+
+# This Mac's own settings (overrides config.json; see README "Settings")
+config.local.json

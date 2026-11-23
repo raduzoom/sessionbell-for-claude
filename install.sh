@@ -28,10 +28,19 @@ import json, os, plistlib, sys
 dest, here, py, prefix = sys.argv[1:5]
 logs = os.path.join(here, "data", "logs")
 # config.json: how often the scanner runs (5 to 120 s; 10 when the file or the value is missing or wrong).
+# config.local.json (git-ignored, this Mac only) overrides config.json key by key.
 every = 10
 try:
     with open(os.path.join(here, "config.json"), encoding="utf-8") as f:
-        value = json.load(f).get("scanEverySeconds")
+        config = json.load(f)
+    try:
+        with open(os.path.join(here, "config.local.json"), encoding="utf-8") as f:
+            local = json.load(f)
+        if isinstance(local, dict):
+            config.update(local)
+    except (OSError, ValueError):
+        pass
+    value = config.get("scanEverySeconds")
     if isinstance(value, int) and not isinstance(value, bool) and 5 <= value <= 120:
         every = value
     else:
