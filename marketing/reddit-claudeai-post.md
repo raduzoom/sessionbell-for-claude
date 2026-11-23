@@ -6,12 +6,10 @@ The earlier "I kept missing which sessions were waiting on me" version is in the
 Post type: **image gallery** (or text post with the images inline). Flair: the sub's project /
 "built with Claude" flair.
 
-Before posting (all three were still open on 2026-11-23):
+Before posting:
 
-- [ ] Push the local work to GitHub. Until then the public repo has **`"replyEnabled": true`**, no LICENSE
-      file, and a README that says `git clone <this repo> claude-dashboard`.
-- [x] The README's install lines use the real repo URL and folder name (`sessionbell-for-claude`); fixed
-      locally 2026-11-23, live once pushed.
+- [x] The local work is on GitHub (pushed 2026-11-23): `"replyEnabled": false`, MIT LICENSE, README
+      installs from `https://github.com/raduzoom/sessionbell-for-claude.git` into `sessionbell-for-claude`.
 - [ ] Image 1 (your Claude sidebar) shows only made-up titles, or is blurred. Real titles never go public.
 
 ## Title
