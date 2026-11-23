@@ -38,9 +38,10 @@ Record each post's numbers at +24 h and +7 days in the log at the end of this fi
 5. **Reddit account.** Post from the user's own account with some history in these subs. A brand-new
    account with a link post gets auto-removed in most of them. If the account is new, spend week 0
    commenting helpfully in r/ClaudeAI and r/ClaudeCode first (see "Ongoing").
-6. **Read each sub's rules and sidebar on the day of posting.** Self-promotion rules change; some subs
-   want a flair, a weekly thread, or a "show-off" day. The notes below are a starting point, not a
-   guarantee.
+6. **Read each sub's rules, pinned posts and flairs before writing its post, not just before posting.**
+   Turn the rules into a checklist next to the post text and tick it. r/ClaudeAI's bot removed the first
+   post for not saying how Claude helped build it (2026-11-17). See
+   `~/Dropbox/hosts/devsite/projects/general-app-knowledge/docs/reddit-launch-posts.md`.
 
 ## Where to post, in order
 
@@ -90,7 +91,7 @@ or the real Claude sidebar; delete any such screenshot before posting.
 
 | Image | File | Use it in |
 |---|---|---|
-| Demo video, 10–15 s: list → click an Asked card → the question in the pane → Open session | `sessionbell-demo.mp4`, `.gif` | Every post: the lead image |
+| Demo video, about 20 s: All → the Pocket Shop tab → dismiss the stuck session (Undo toast) → pin the dark-mode question → click an Asked card → Open session | `sessionbell-demo.mp4`, `.gif` | Every post: the lead image |
 | Wide view, light / dark | `sessionbell-wide-*.png` | r/ClaudeAI (light), r/ClaudeCode and r/selfhosted (dark) |
 | Narrow (half-screen) view, light / dark | `sessionbell-narrow-*.png` | Gallery second image; r/macapps |
 | macOS banner close-up: "Sessionbell / Fix dark mode on the settings screen" | `sessionbell-banner.png` (crop), `sessionbell-banner-scene.png` (whole desktop) | Gallery; shows it nudges you while you're elsewhere. Mock-up: the real banner shows Script Editor's icon, not Sessionbell's, until a native app exists |
@@ -101,7 +102,7 @@ or the real Claude sidebar; delete any such screenshot before posting.
 
 Remake them: the screenshots and video come from `design/page-check/build/snapshot-demo-*.html` (run
 `python3 -I tools/snapshot.py` first); the banner and before/after from `marketing/images/src/*.html`, rendered
-with headless Chrome at 1600×1000, 2×. The video ends on a title card ("Free · runs on your Mac · open source").
+with headless Chrome at 1600×1000, 2×. The video is recorded by `marketing/images/src/record.py` (Playwright, installed Chrome, fake cursor, `claude://` clicks blocked), then encoded with ffmpeg; the commands are at the top of that file. It ends on a title card ("Free · runs on your Mac · open source").
 
 Reddit galleries take up to 20 images, but lead with the video and keep it to 3–4 images.
 
@@ -167,4 +168,4 @@ against the Python rule.
 
 | Date | Sub | Title (short) | +24 h up / comments | +7 d stars | Notes |
 |---|---|---|---|---|---|
-| | | | | | |
+| 2026-11-17 | r/ClaudeAI | I kept missing which of my Claude Code sessions… | | | First try removed by the mod bot (rule 7 b/c); the repost with "How I built it with Claude" was removed by the one-post-per-hour flood bot. Third try an hour after the repost. [Link](https://www.reddit.com/r/ClaudeAI/comments/1xynmr4/) |
